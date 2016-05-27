@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" type="text/css" href="http://bioinfud.com/DifExp/bootstrap.min.css"/>
+    <!-- Optional theme -->  
+    <title>{% block title %}KmerCountersToolKit (KCTK){% endblock %}</title>
+        <!-- Latest compiled and minified JavaScript and JQuery-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+        <nav class="navbar navbar-default" role="navigation">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <a class="navbar-brand" href="/">KCTK</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="navbar-collapse navbar-right" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                {% if not user.is_authenticated %}
+                    <li>
+                    <a href="/register/">Registrarse</a>
+                    </li>
+                    <li><a href="/login/">Acceder</a></li>
+                {% else %}
+                <span></span>
+                    <li  class="active" ><a href="#" style="cursor:default">Bienvenido, {{user.profile.firstName}}</a>  </li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="/logout/">Salir</a></li>
+                {% endif %}
+              </ul>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav>
+        </div>
+    </div>
+    <div class="row">
+        {% if user.is_authenticated %}
+        <div class="col-sm-3">
+            <ul class="nav nav-pills nav-stacked">
+                <li ><a href="/">Home</a></li>
+                <li ><a href="/process/show/">Procesos</a></li>
+                <li ><a href="/files/">Archivos</a></li>
+                <li class="dropdown open">
+                    <ul class="dropdown-menu" style="min-width: 100%;display:block;">
+                        <li><a href="#" style="color: white;">Herramientas</a></li>
+                        <li><a href="/tools/bfcounter" style="text-decoration: underline;"> » BFCounter</a></li>
+                        <li><a href="/tools/dsk" style="text-decoration: underline;"> » DSK</a></li>
+                        <li><a href="/tools/jellyfish" style="text-decoration: underline;"> » Jellyfish</a></li>
+                        <li><a href="/tools/kanalyze" style="text-decoration: underline;"> » KAnalyze</a></li>
+                        <li><a href="/tools/kmc2" style="text-decoration: underline;"> » KMC 2</a></li> 
+                        <li><a href="/tools/tallymer" style="text-decoration: underline;"> » Tallymer</a></li>
+                        <li><a href="/tools/turtle" style="text-decoration: underline;"> » Turtle</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="alert alert-success" style="bottom: 30px;position: fixed;">
+                <strong>Ayuda: </strong><br><br>
+                &#8226; <a href="/help/video/">Video </a><br>
+                &#8226; <a href="/help/tutorial/" target="_blank">Tutorial </a>
+            </div>
+        </div>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <div class="col-sm-9" style="border-left: solid rgb(80, 121, 150) 1px;">
+        {% endif %}
+            {% block content %}{% endblock %}
+        {% if user.is_authenticated %}
+        </div>
+        {% endif %}
+    </div>        
+</div>
+</body>
+</html>

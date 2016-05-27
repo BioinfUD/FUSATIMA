@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- HOME si el usuario está logueado -->
+{% if user.is_authenticated %}
+    <h1 style="text-align: center;">
+       Instrucciones básicas
+    </h1>
+    <p style="text-align: justify;">
+        Para hacer un conteo realice los siguientes pasos:
+        <ul>
+            <li style="text-align: justify;">De clic en la herramienta deseada.</li>
+            <li style="text-align: justify;">Seleccione el archivo a procesar (alguno de los de prueba o un archivo subido previamente).</li>
+            <li style="text-align: justify;">Indique los parámetros de entrada y haga clic en en enviar.</li>
+            <li style="text-align: justify;">Revise el estado de ejecución de su análisis en el menú "Procesos".</li>
+            <li style="text-align: justify;">Cuando la ejecución haya terminado exitosamente de clic en "ver" para visualizar textual y gráficamente el resultado.</li>
+            <li style="text-align: justify;">Descargue sus resultados.</li>
+        </ul>
+    </p>
+    <br>
+    <!--<h1 style="text-align: center;">
+       Resumen de la actividad de usuario
+    </h1>
+    <p>
+        <div class="row">
+            <div class="col-sm-12" style='text-align:justify'>
+            <div class="row">
+                <div class="col-sm-5" style="border: white solid 1px;border-radius: 4px;margin-left: 14px;">
+                    <h4>Resumen de los últimos archivos subidos por {{user.profile.firstName}}:</h4> 
+                    <div class="list-group">
+                        <div href="#" class="list-group-item" style="font-weight: bold;">
+                            <span>
+                                Nombre del archivo
+                            </span>
+                            <span class="pull-right">
+                                Descargar
+                            </span>
+                        </div> 
+                    {% for f in uploadFiles %}
+                        <div href="#" class="list-group-item glyphicon glyphicon-file">
+                            <span class="" title="Description: {{f.description}}">
+                                {{f.fileUpload.name|truncatechars:22}}
+                            </span>
+                            <span class="pull-right">
+                                <span class="label label-success glyphicon glyphicon-download" style="display: table-cell;">
+                                    <a style="color:white" href="/files/{{f.id}}/">
+                                    Descargar 
+                                    </a>
+                                </span>
+                            </span>
+                        </div> 
+                    {% endfor %}
+                    </div>
+                    * Todo usuario nuevo tendrá 3 archivos de prueba asociados automáticamente.<br>
+                    * Para ver el listado de archivos completo, vaya al menú "Archivos".
+                </div>
+                <div class="col-sm-6" style="border: white solid 1px;border-radius: 4px;margin-left: 14px;">
+                    <h4>Resumen de los últimos procesos ejecutados por {{user.profile.firstName}}:</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Contador</th>
+                                <th>Estado</th>
+                                <th>Ver</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for p in procesos %}
+                            <tr
+                                {% if "Terminado exitosamente" == p.get_estado %}
+                                    style="background-color: #1E611E;"
+                                {% elif "Terminado con errores" == p.get_estado %}
+                                    style="background-color: #6B2223;"
+                                {% endif %}
+                            >
+                                <td>{{p.pk}}</td>
+                                <td>{{p.contador}}</td>
+                                <td>{{p.get_estado}}</td>
+                                <td>{% if "Ejecutandose" == p.get_estado or "En espera" == p.get_estado %}
+                                    {% elif "Terminado con errores" == p.get_estado %}
+                                    <a href="/process/error/{{p.id}}/">Ver</a>
+                                    {% else %}
+                                    <a href="/process/show/{{p.id}}/">Ver</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <div>* Para ver el listado de procesos completo, vaya al menú "Procesos".</div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </p>-->
+    <br><br>
+<!-- HOME si el usuario NO está logueado -->
+{% else %}
+<div class="row" style="text-align:center">
+    <div class="col-sm-12">
+        <h1>
+            KmerCountersToolKit (KCTK)
+        </h1>
+        <br>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-3"></div>
+    <div class="col-sm-6">
+        <iframe width="100%" height="315" src="https://www.youtube.com/embed/Ub1BPjfoKgU?rel=0" frameborder="0" allowfullscreen></iframe>
+    </div>
+    <div class="col-sm-3"></div>
+</div>
+<br>
+<div class="row">
+    <div class="col-sm-2"></div>
+    <div class="col-sm-8" style="text-align: justify;">
+        KmerCountersToolKit (KCTK) es un kit de herramientas para el conteo de k-mers. Este kit cuenta con los contadores de k-mers desarrollados en los ultimos años y posee una interfaz grafica orientada a la web que le permite al usuario la gestión de archivos, procesos y resultados de una manera rapida e intuitiva. Los resultados del conteo se muestran de forma estatica por medio de texto y de forma dinamica por medio de una grafica.
+    </div>
+    <div class="col-sm-2"></div>
+</div>
+{% endif %}
+
+
+{% endblock %}
