@@ -12,6 +12,7 @@ from django.template import loader, Context, RequestContext
 from django.contrib.auth import authenticate, login, logout
 from django.core.servers.basehttp import FileWrapper
 import os
+from PIL import Image
 
 
 #   ############ AUTENTICATION ###############
@@ -55,30 +56,34 @@ def register_user(request):
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
         if password1 == password2:
-            if User.objects.get(username=email):
-                error = 'El usuario ya existe'
+            try:
+                if User.objects.filter(username=email):
+                    error = 'El usuario ya existe'
+                    return render(request, 'error.html', {'error': error})
+                else:
+                    new_user = User(username=email, email=email)
+                    new_user.set_password(password1)
+                    new_user.save()
+                    new_profile = Profile(user=new_user,
+                                          email=email,
+                                          firstName=request.POST.get('firstName', ''),
+                                          lastName=request.POST.get('lastName', ''),
+                                          )
+                    new_profile.save()
+                    # Agrego los 5 archivos predeterminados al usuario
+                    testFiles = File.objects.filter(test=True)
+                    for f in testFiles:
+                        url_file = f.fileUpload.url
+                        new_test_file = File(fileUpload=Django_File(open("%s%s" % (settings.BASE_DIR, url_file))),
+                                             description="Archivo de Prueba", profile=new_profile, ext="results", tipo=1)
+                        new_test_file.save()
+                    success = 'Se ha registrado satisfactoriamente.'
+                    url_continuar = '/login'
+                    msg_continuar = 'Acceder a la cuenta'
+                    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
+            except:
+                error = 'Error al registrar intente de nuevo'
                 return render(request, 'error.html', {'error': error})
-            else:
-                new_user = User(username=email, email=email)
-                new_user.set_password(password1)
-                new_user.save()
-                new_profile = Profile(user=new_user,
-                                      email=email,
-                                      firstName=request.POST.get('firstName', ''),
-                                      lastName=request.POST.get('lastName', ''),
-                                      )
-                new_profile.save()
-                # Agrego los 5 archivos predeterminados al usuario
-                testFiles = File.objects.filter(test=True)
-                for f in testFiles:
-                    url_file = f.fileUpload.url
-                    new_test_file = File(fileUpload=Django_File(open("%s%s" % (settings.BASE_DIR, url_file))),
-                                         description="Archivo de Prueba", profile=new_profile, ext="results", tipo=1)
-                    new_test_file.save()
-                success = 'Se ha registrado satisfactoriamente.'
-                url_continuar = '/login'
-                msg_continuar = 'Acceder a la cuenta'
-                return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
         else:
             error = 'Las contrasenas no son iguales'
             return render(request, 'error.html', {'error': error})
@@ -93,12 +98,22 @@ def filesubmit(request):
     if request.method == 'POST':
         #  try:
         desc = request.POST.get('description', '')
+        tipo_imagen = True if request.POST.get('tipo', '') == "Multiespectral" else False
         user = User.objects.select_related().get(id=request.user.pk)
         p = user.profile
         ext = str(request.FILES['file']).split(".")[-1]
         instance = File(fileUpload=request.FILES[
-                        'file'], description=desc, profile=p, ext=ext, tipo=1, test=False)
+                        'file'], description=desc, profile=p, ext=ext, tipo=1, tipo_multi=tipo_imagen)
         instance.save()
+        outfile = instance.fileUpload.path + ".jpg"
+        print outfile
+        try:
+            im = Image.open(os.path.join(instance.fileUpload.path))
+            print "Generating jpeg for %s" % instance.fileUpload.path
+            im.thumbnail(im.size)
+            im.save(outfile, "JPEG", quality=100)
+        except Exception, e:
+            print e
         success = 'El archivo se ha guardado satisfactoriamente.'
         url_continuar = '/files'
         msg_continuar = 'Ver lista de archivos'
@@ -160,11 +175,16 @@ def editfile(request):
 #  ############ PAGE RENDER ###############
 def home(request):
     if request.user.is_authenticated():
-        profile = User.objects.select_related().get(id=request.user.pk).profile
-        uploadFiles = File.objects.filter(
-            profile=profile).filter(tipo=1).order_by("-id")[:5]
-        procesos = Proceso.objects.filter(profile=profile).order_by("-id")[:5]
-        return render(request, 'home.html', {'profile': profile, 'uploadFiles': uploadFiles, 'procesos': procesos})
+        if request.method == 'POST':
+            form = ImagesForm(request.POST)
+            if form.is_valid():
+                pass# Hago cosas:
+        # if a GET (or any other method) we'll create a blank form
+        else:
+            profile = User.objects.select_related().get(id=request.user.pk).profile
+            pan_image_files = File.objects.all().filter(profile=profile).filter(tipo=1).filter(tipo_multi=False)
+            mul_image_files = File.objects.all().filter(profile=profile).filter(tipo=1).filter(tipo_multi=True)
+            return render(request, 'home.html', {'pan_image_files': pan_image_files, 'mul_image_files': mul_image_files})
     else:
         return render(request, 'home.html')
 
@@ -172,72 +192,10 @@ def home(request):
 def show_video(request):
     return render(request, 'video.html')
 
+
 def show_tutorial(request):
-    image_data = open('%s/Manuales/ManualUsuarioKCTK.pdf' % settings.BASE_DIR, 'rb').read()
+    image_data = open('%s/Manuales/ManualUsuarioFusionMultiPan.pdf' % settings.BASE_DIR, 'rb').read()
     return HttpResponse(image_data, content_type='application/pdf')
-
-
-@login_required(login_url='/login/')
-def bfcounter_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'bfcounter.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def dsk_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'dsk.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def jellyfish_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'jellyfish.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def kanalyze_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'kanalyze.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def khmer_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'khmer.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def kmc2_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'kmc2.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def mspkmercounter_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'kmc2.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def tallymer_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'tallymer.html', {'fileList': kmerKfiles})
-
-
-@login_required(login_url='/login/')
-def turtle_form(request):
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmerKfiles = File.objects.all().filter(profile=profile).filter(tipo=1)
-    return render(request, 'turtle.html', {'fileList': kmerKfiles})
 
 
 @login_required(login_url='/login/')
@@ -250,9 +208,9 @@ def upload_success(request):
 def show_files(request):
     user = User.objects.select_related().get(id=request.user.pk)
     profile = user.profile
-    file_list = File.objects.all().filter(profile=profile).filter(tipo=1).order_by("-id")
-    file_list2 = File.objects.all().filter(profile=profile).filter(tipo=0).order_by("-id")
-    return render(request, 'files.html', {'file_list': file_list, 'file_list2': file_list2})
+    mul_file_list = File.objects.all().filter(profile=profile).filter(tipo=1).filter(tipo_multi=True).order_by("-id")
+    pan_file_list = File.objects.all().filter(profile=profile).filter(tipo=1).filter(tipo_multi=False).order_by("-id")
+    return render(request, 'files.html', {'pan_file_list': pan_file_list, 'mul_file_list': mul_file_list})
 
 
 @login_required(login_url='/login/')
@@ -293,11 +251,11 @@ def download_file(request, id_file):
     print file_path
     return response
 
-########## RUN KMER COUNTERS TOOLS ################
+########## RUN THE FUSION SCRIPT ################
 
 
 @login_required(login_url='/login/')
-def run_bfcounter(request):
+def make_fusion(request):
     file_id = request.POST.get('file', '')
     file_path = File.objects.get(id=int(file_id)).fileUpload.path
     k = request.POST.get('k', '')
@@ -311,125 +269,3 @@ def run_bfcounter(request):
     msg_continuar = 'Ver lista de procesos'
     return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
 
-
-@login_required(login_url='/login/')
-def run_dsk(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    minAb = request.POST.get('minAb', '')
-    maxAb = request.POST.get('maxAb', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    dsk = DSK(contador=1, k=k, minAb=minAb, maxAb=maxAb, profile=profile)
-    dsk.save()
-    dsk.run(file=file_path, k=k, minAb=minAb, maxAb=maxAb)
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
-
-
-@login_required(login_url='/login/')
-def run_jellyfish(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    m = request.POST.get('m', '')
-    minAb = request.POST.get('minAb', '')
-    maxAb = request.POST.get('maxAb', '')
-    canonical = request.POST.get('canonical', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    jfish = Jellyfish(contador=1, m=m, minAb=minAb, maxAb=maxAb,
-                      canonical=canonical, profile=profile)
-    jfish.save()
-    jfish.run(file=file_path, m=m, minAb=minAb,
-              maxAb=maxAb, canonical=canonical)
-    # Falta el response
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
-
-
-@login_required(login_url='/login/')
-def run_kanalyze(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    formato = request.POST.get('formato', '')
-    reverse = request.POST.get('reverse', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    klyze = KAnalyze(contador=1, k=k, formato=formato,
-                     reverse=reverse, profile=profile)
-    klyze.save()
-    klyze.run(file=file_path, k=k, formato=formato, reverse=reverse)
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
-
-
-@login_required(login_url='/login/')
-def run_kmc2(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    formato = request.POST.get('formato', '')
-    minAb = request.POST.get('minAb', '')
-    maxAb = request.POST.get('maxAb', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    kmc2 = KMC2(contador=1, k=k, formato=formato,
-                minAb=minAb, maxAb=maxAb, profile=profile)
-    kmc2.save()
-    kmc2.run(file=file_path, k=k, minAb=minAb, maxAb=maxAb, formato=formato)
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
-
-
-@login_required(login_url='/login/')
-def run_mspkmercounter(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    l = request.POST.get('l', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    mspk = MSPKmerCounter(contador=1, k=k, l=l, profile=profile)
-    mspk.save()
-    mspk.run(file=file_path, k=k, l=l)
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
-
-
-@login_required(login_url='/login/')
-def run_tallymer(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    minAb = request.POST.get('minAb', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    tall = Tallymer(contador=1, k=k, minAb=minAb, profile=profile)
-    tall.save()
-    tall.run(file=file_path, k=k, minAb=minAb)
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
-
-
-@login_required(login_url='/login/')
-def run_turtle(request):
-    file_id = request.POST.get('file', '')
-    file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    formato = request.POST.get('formato', '')
-    profile = User.objects.select_related().get(id=request.user.pk).profile
-    turtle = Turtle(contador=1, k=k, formato=formato, profile=profile)
-    turtle.save()
-    turtle.run(file=file_path, k=k, formato=formato)
-    success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por meido del boton "Procesos" del menú principal o haciendo clic en el siguiente botón::'
-    url_continuar = '/process/show'
-    msg_continuar = 'Ver lista de procesos'
-    return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS as TCP
+from easy_thumbnails.conf import Settings as thumbnail_settings
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))#
 
@@ -68,13 +69,12 @@ MEDIA_URL = '/files/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
+STATIC_ROOT = '/home/nazkter/Develop/fusion_multipan/static/'
 STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    '/home/nazkter/Develop/fusion_multipan/files/',
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -125,6 +125,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'processing',
+    'easy_thumbnails',
+    'image_cropping',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -159,3 +161,7 @@ LOGGING = {
         },
     }
 }
+
+THUMBNAIL_PROCESSORS = (
+    'image_cropping.thumbnail_processors.crop_corners',
+) + thumbnail_settings.THUMBNAIL_PROCESSORS

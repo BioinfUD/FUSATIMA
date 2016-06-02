@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,11 +9,11 @@
         <!-- Latest compiled and minified JavaScript and JQuery-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="{% static 'js/jquery.Jcrop.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/jquery.Jcrop.min.css' %}" type="text/css" />
 </head>
 <body>
-<div class="container">
+<div class="container" style="width: 100%!important;">
     <div class="row">
         <div class="col-sm-12">
         <nav class="navbar navbar-default" role="navigation">
@@ -43,33 +44,21 @@
     </div>
     <div class="row">
         {% if user.is_authenticated %}
-        <div class="col-sm-3">
+        <div class="col-sm-2">
             <ul class="nav nav-pills nav-stacked">
                 <li ><a href="/">Home</a></li>
+                <li ><a href="/files/">Imagenes</a></li>
                 <li ><a href="/process/show/">Procesos</a></li>
-                <li ><a href="/files/">Archivos</a></li>
-                <li class="dropdown open">
-                    <ul class="dropdown-menu" style="min-width: 100%;display:block;">
-                        <li><a href="#" style="color: white;">Herramientas</a></li>
-                        <li><a href="/tools/bfcounter" style="text-decoration: underline;"> » BFCounter</a></li>
-                        <li><a href="/tools/dsk" style="text-decoration: underline;"> » DSK</a></li>
-                        <li><a href="/tools/jellyfish" style="text-decoration: underline;"> » Jellyfish</a></li>
-                        <li><a href="/tools/kanalyze" style="text-decoration: underline;"> » KAnalyze</a></li>
-                        <li><a href="/tools/kmc2" style="text-decoration: underline;"> » KMC 2</a></li> 
-                        <li><a href="/tools/tallymer" style="text-decoration: underline;"> » Tallymer</a></li>
-                        <li><a href="/tools/turtle" style="text-decoration: underline;"> » Turtle</a></li>
-                    </ul>
-                </li>
             </ul>
-            <div class="alert alert-success" style="bottom: 30px;position: fixed;">
-                <strong>Ayuda: </strong><br><br>
-                &#8226; <a href="/help/video/">Video </a><br>
-                &#8226; <a href="/help/tutorial/" target="_blank">Tutorial </a>
-            </div>
+            <!-- <div id="preview-pane" style="position: fixed;z-index: 2000;bottom: 5px;left: 5px;">
+                <div class="preview-container">
+                    <img src="{% static 'default.png' %}" class="jcrop-preview" id="preview_mul" alt="Preview" />
+                </div>
+            </div> -->
         </div>
         {% endif %}
         {% if user.is_authenticated %}
-        <div class="col-sm-9" style="border-left: solid rgb(80, 121, 150) 1px;">
+        <div class="col-sm-10" style="border-left: solid rgb(80, 121, 150) 1px;">
         {% endif %}
             {% block content %}{% endblock %}
         {% if user.is_authenticated %}
@@ -77,5 +66,170 @@
         {% endif %}
     </div>        
 </div>
+<script type="text/javascript">
+// se declara la API de jcrop para interactuar con la imagen 
+var jcrop_api_pan;
+var jcrop_api_mul;
+
+/* Grab some information about the preview pane
+$preview = $('#preview-pane'),
+$pcnt = $('#preview-pane .preview-container'),
+$pimg = $('#preview-pane .preview-container img'),
+
+xsize = $pcnt.width(),
+ysize = $pcnt.height();*/
+
+$('#id_file_mul').on('change', function (e) {
+    // si ya existe un API declarado, lo destruyo para poder redimencionar la imagen
+    if(jcrop_api_mul) jcrop_api_mul.destroy();
+    $('#target_mul').attr('src',/static/+this.value+'.jpg');
+    //$('#preview_mul').attr('src',/static/+this.value+'.jpg');
+    $('#target_mul').attr('style','max-width: 100%');
+    var image = new Image();
+    image.src = $('#target_mul').attr("src");
+    if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
+    //creao un nuevo widget de Jcrop para la nueva imagen
+    $('#target_mul').Jcrop({
+        //onChange: showPreview_mul,
+        trueSize: [image.naturalWidth,image.naturalHeight],
+        bgColor:     'black',
+        bgOpacity:   .2,
+        setSelect:   [ 0, 0, 50, 50 ],
+        aspectRatio: 1,
+        allowResize: false,
+        allowSelect: false
+    },function(){
+        // Use the API to get the real image size
+        //var bounds = this.getBounds();
+        //boundx = bounds[0];
+        //boundy = bounds[1];
+        // Store the API in the jcrop_api variable
+        jcrop_api_mul = this;
+        // Move the preview into the jcrop container for css positioning
+        //$preview.appendTo(jcrop_api_mul.ui.holder);
+        
+    });
+    //configuro el valor del slider que da el tamaño al cuadro de recorte
+    if(image.naturalWidth > image.naturalHeight){
+        max_diadic = Math.log(image.naturalHeight) / Math.log(2)
+        console.log("H:"+image.naturalHeight);
+        console.log("W:"+image.naturalWidth);
+        console.log("max_diadic:"+max_diadic);
+    }else{
+        max_diadic = Math.log(image.naturalWidth) / Math.log(2)
+        console.log("H:"+image.naturalHeight);
+        console.log("W:"+image.naturalWidth);
+        console.log("max_diadic:"+max_diadic);
+    }
+    $('#id_diadica_mul').attr('max', max_diadic|0);
+    $('#id_diadica_mul_val').html( $('#id_diadica_mul').val() );
+    
+});
+$('#id_file_pan').on('change', function (e) {
+    if(jcrop_api_pan) jcrop_api_pan.destroy();
+    $('#target_pan').attr('src',/static/+this.value+'.jpg');
+    $('#preview_pan').attr('src',/static/+this.value+'.jpg');
+    $('#target_pan').attr('style','max-width: 100%');
+    var image = new Image();
+    image.src = $('#target_pan').attr("src");
+    if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
+    //creao un nuevo widget de Jcrop para la nueva imagen
+    $('#target_pan').Jcrop({
+        //onChange: showPreview_pan,
+        trueSize: [image.naturalWidth,image.naturalHeight],
+        bgColor:     'black',
+        bgOpacity:   .2,
+        setSelect:   [ 0, 0, 50, 50 ],
+        aspectRatio: 1,
+        allowResize: false,
+        allowSelect: false
+    },function(){
+        jcrop_api_pan = this;
+    });
+    //configuro el valor del slider que da el tamaño al cuadro de recorte
+    if(image.naturalWidth > image.naturalHeight){
+        max_diadic = Math.log(image.naturalHeight) / Math.log(2)
+        console.log("max_diadic:"+max_diadic);
+    }else{
+        max_diadic = Math.log(image.naturalWidth) / Math.log(2)
+        console.log("max_diadic:"+max_diadic);
+    }
+    $('#id_diadica_pan').attr('max', max_diadic|0);
+    $('#id_diadica_pan_val').html( $('#id_diadica_pan').val() );
+});
+$(document).on('input', '#id_diadica_mul', function() {
+    //se actualiza el valor en frontend
+    var diadic_val = $('#id_diadica_mul').val();
+    $('#id_diadica_mul_val').html( diadic_val );
+    //se cambia el tamaño del recorte
+    var max_val_diadic = Math.pow(2, diadic_val);
+    if(jcrop_api_mul) jcrop_api_mul.setSelect([0, 0, max_val_diadic, max_val_diadic]);
+});
+$(document).on('input', '#id_diadica_pan', function() {
+    //se actualiza el valor en frontend
+    var diadic_val = $('#id_diadica_pan').val();
+    $('#id_diadica_mul_pan').html( diadic_val );
+    //se cambia el tamaño del recorte
+    var max_val_diadic = Math.pow(2, diadic_val);
+    if(jcrop_api_pan) jcrop_api_pan.setSelect([0, 0, max_val_diadic, max_val_diadic]);
+});
+// function showPreview_mul(c){
+//     if (parseInt(c.w) > 0)
+//       {
+//         var rx = xsize / c.w;
+//         var ry = ysize / c.h;
+
+//         $pimg.css({
+//           width: Math.round(rx * boundx) + 'px',
+//           height: Math.round(ry * boundy) + 'px',
+//           marginLeft: '-' + Math.round(rx * c.x) + 'px',
+//           marginTop: '-' + Math.round(ry * c.y) + 'px'
+//         });
+//       }
+// }
+// function showPreview_pan(coords){
+//     var rx = 100 / coords.w;
+//     var ry = 100 / coords.h;
+//     $('#preview_pan').css({
+//         width: Math.round(rx * $('target_mul').width()) + 'px',
+//         height: Math.round(ry * $('target_mul').height()) + 'px',
+//         marginLeft: '-' + Math.round(rx * coords.x) + 'px',
+//         marginTop: '-' + Math.round(ry * coords.y) + 'px'
+//     });
+// }
+</script>
+<style type="text/css">
+
+/* Apply these styles only when #preview-pane has
+   been placed within the Jcrop widget */
+.jcrop-holder #preview-pane {
+    display: block;
+    position: fixed;
+    z-index: 2000;
+    bottom: 5px;
+    left: 5px;
+    padding: 1px;
+    border: 1px rgba(0,0,0,.4) solid;
+    background-color: white;
+
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+
+    -webkit-box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* The Javascript code will set the aspect ratio of the crop
+   area based on the size of the thumbnail preview,
+   specified here */
+#preview-pane .preview-container {
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+}
+
+</style>
 </body>
 </html>

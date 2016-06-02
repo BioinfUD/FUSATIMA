@@ -5,16 +5,6 @@ admin.autodiscover()
 
 urlpatterns = patterns('processing.views',
     url(r'^$', 'home', name='home'),
-    # Tools form
-    url(r'^tools/bfcounter$', 'bfcounter_form'),
-    url(r'^tools/dsk$', 'dsk_form'),
-    url(r'^tools/jellyfish$', 'jellyfish_form'),
-    url(r'^tools/kanalyze$', 'kanalyze_form'),
-    url(r'^tools/khmer$', 'khmer_form'),
-    url(r'^tools/kmc2$', 'kmc2_form'),
-    url(r'^tools/mspkmercounter$', 'mspkmercounter_form'),
-    url(r'^tools/tallymer$', 'tallymer_form'),
-    url(r'^tools/turtle$', 'turtle_form'),
     # Users admin
     url(r'^register/$', 'register_user'),
     url(r'^login/$', 'log_in'),
@@ -35,13 +25,7 @@ urlpatterns = patterns('processing.views',
     url(r'^process/$', 'show_processes'), #revisar
     url(r'^editfile/$', 'editfile'),
     # Tools execution
-    url(r'^run/bfcounter/$', 'run_bfcounter'),
-    url(r'^run/dsk/$', 'run_dsk'),
-    url(r'^run/jellyfish/$', 'run_jellyfish'),
-    url(r'^run/kanalyze/$', 'run_kanalyze'),
-    url(r'^run/kmc2/$', 'run_kmc2'),
-    url(r'^run/tallymer/$', 'run_tallymer'),
-    url(r'^run/turtle/$', 'run_turtle'),
+    url(r'^make-fusion/$', 'make_fusion'),
     #HELP
     url(r'^help/video/$', 'show_video'),
     url(r'^help/tutorial/$', 'show_tutorial'),

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+from django import forms
 import subprocess
 import datetime
 import threading
@@ -13,6 +14,8 @@ from django.conf import settings
 from random import randint
 import os
 import csv
+from image_cropping import ImageCropWidget
+from image_cropping import ImageCropField, ImageRatioField
 
 # Opciones estáticas
 POSIBLES_ESTADOS_PROCESOS = (
@@ -21,41 +24,17 @@ POSIBLES_ESTADOS_PROCESOS = (
     (2, "Ejecutandose"),
     (3, "En espera")
 )
-CONTADORES = (
-    (0, "BFCounter"),
-    (1, "DSK"),
-    (2, "Jellyfish"),
-    (3, "KAnalyze"),
-    (4, "KHMer"),
-    (5, "KMC2"),
-    (6, "MSPKmerCounter"),
-    (7, "Tallymer"),
-    (8, "Turtle"),
-)
 TIPO = (
     (0, "output"),
     (1, "input"),
 )
-REVERSE = (
-    (0, "duplicate"),
-    (1, "single"),
-    (1, "canonical"),
-)
 FORMATO = (
-    (0, "raw"),
-    (1, "fasta"),
+    (0, "tif"),
+    (1, "tiff"),
     (2, "fastq"),
     (3, "fastagz"),
     (4, "fastqgz"),
 )
-# borrar este diccionario de MApeadores:
-MAPEADORES = (
-    (0, "BFCounter"),
-)
-TIPOS_MAPEO = (
-    (0, "BFCounter"),
-)
-
 
 class Profile(models.Model):
     user = models.OneToOneField(User)
@@ -72,10 +51,14 @@ class Profile(models.Model):
 
 class File(models.Model):
     fileUpload = models.FileField()
+    pan_image = ImageCropField(blank=True, upload_to='uploaded_images')
+    # size is "width x height"
+    cropping = ImageRatioField('pan_image', '430x360')
     description = models.TextField(default="")
     profile = models.ForeignKey(Profile)
     ext = models.CharField(max_length=7)
     tipo = models.IntegerField(choices=TIPO, default=0)
+    tipo_multi = models.BooleanField(default=False) #False for Pancromatic; True for Multispectral
     test = models.BooleanField(default=False)
 
     class Meta:
@@ -91,7 +74,13 @@ class File(models.Model):
         return sorted(d)
 
     def __unicode__(self):
-        return u"ARCHIVO \n Location: %s \n Description: %s " % (self.fileUpload.path, self.description)
+        return u"Imagen\nDescription: %s " % (self.fileUpload.path, self.description)
+
+
+class ImagesForm(forms.ModelForm):
+    class Meta:
+        model = File
+        fields = ('pan_image',)
 
 
 class Proceso(models.Model):
@@ -101,7 +90,6 @@ class Proceso(models.Model):
     std_out = models.TextField(default="None")
     comando = models.CharField(max_length=2000, default="echo Hola mundo")
     profile = models.ForeignKey(Profile)
-    contador = models.TextField(default="")
     inicio = models.DateTimeField(auto_now_add=True)
     fin = models.DateTimeField(null=True)
     resultado = models.ForeignKey(File, null=True, blank=True)
@@ -154,106 +142,42 @@ class Proceso(models.Model):
         return u"ID: %s Estado: %s \n Comando: %s \n" % (str(self.id), str(self.estado), str(self.comando))
 
 
-class BFCounter(models.Model):
+class Fusion(models.Model):
 
-    name = models.TextField(default="Experimento")
+    name = models.TextField(default="Image Fusion Multispectral and Pancromatic")
     procesos = models.ManyToManyField(Proceso)
-    contador = models.IntegerField(choices=CONTADORES, default=0)
     profile = models.ForeignKey(Profile)
-    k = models.IntegerField()
-    numKmers = models.BigIntegerField()
-    out_file = models.ForeignKey(File, null=True)
-
-    def run_this(self, file="", k="", numKmers=""):
-        self.name = "Experimento %s" % self.id
-        self.save()
-        tmp_dir = "/tmp/BFCounter%s" % randint(1, 1000000)
-        comando_part1 = "BFCounter count -t %s -k %s -n %s -o %s %s" % (
-            settings.CORES, k, numKmers, tmp_dir, file)
-        comando_part2 = "BFCounter dump -k %s -i %s -o %s_dump" % (
-            k, tmp_dir, tmp_dir)
-        comando = "%s && %s" % (comando_part1, comando_part2)
-        # comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl
-        # --thread_count %s  --output_dir %s  --transcripts %s --left %s
-        # --right %s --seqType fq --est_method RSEM --aln_method bowtie
-        # --prep_reference" % (settings.CORES, tmp_dir, reference, "
-        # ".join(reads_1), " ".join(reads_2))
-        print "comando: %s" % (comando)
-        p1 = Proceso(comando=str(comando),
-                     profile=self.profile, contador="BFCounter")
-        p1.save()
-        self.procesos.add(p1)
-        # To get files with path trin.fileUpload.path
-        # Genero indice y espero hasta que este listo
-        t1 = threading.Thread(target=p1.run_process)
-        t1.setDaemon(True)
-        t1.start()
-        while t1.isAlive():
-            sleep(1)
-        file_name = "%s_dump" % tmp_dir
-        out_file = File(fileUpload=Django_File(open(
-            file_name)), description="Salida " + self.name, profile=self.profile, ext="results")
-        out_file.save()
-        self.out_file = out_file
-        p1.resultado = out_file
-        p1.save()
-
-    def run(self, file="", k="", numKmers=""):
-        t = threading.Thread(target=self.run_this, kwargs=dict(
-            file=file, k=k, numKmers=numKmers))
-        t.setDaemon(True)
-        t.start()
-
-    class Meta:
-        verbose_name_plural = "Procesos de alinear y estimar abundancia"
-
-    def __unicode__(self):
-        return u"Alineamiento y estimación \n %s" % self.name
-
-
-class DSK(models.Model):
-
-    name = models.TextField(default="Experimento")
-    procesos = models.ManyToManyField(Proceso)
-    contador = models.IntegerField(choices=CONTADORES, default=0)
-    profile = models.ForeignKey(Profile)
-    k = models.IntegerField()
     minAb = models.BigIntegerField()
     maxAb = models.BigIntegerField()
     out_file = models.ForeignKey(File, null=True)
 
-    def run_this(self, file="", k="", minAb="", maxAb=""):
-        self.name = "Experimento %s" % self.id
+    def run_this(self, file_pan="", file_mul=""):
+        self.name = "Fusión #%s" % self.id
         self.save()
-        tmp_dir = "DSK%s" % randint(1, 1000000)
-        comando_part1 = "dsk -nb-cores %s -kmer-size %s -abundance-min %s -abundance-max %s -file %s -out /tmp/%s" % (
-            settings.CORES, k, minAb, maxAb, file, tmp_dir)
-        comando_part2 = "dsk2ascii -file /tmp/%s.h5 -out /tmp/%s_final" % (
-            tmp_dir, tmp_dir)
-        comando = "%s && %s" % (comando_part1, comando_part2)
-        # comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl
-        # --thread_count %s  --output_dir %s  --transcripts %s --left %s
-        # --right %s --seqType fq --est_method RSEM --aln_method bowtie
-        # --prep_reference" % (settings.CORES, tmp_dir, reference, "
-        # ".join(reads_1), " ".join(reads_2))
+        tmp_dir = "fusion_%s" % randint(1, 1000000)
+        # Se ejecuta el Scrip creado para fusionar las imagenes
+        comando = "python multiPanFusion -pan %s -mul %s" % (file_pan, file_mul)
         print "comando: %s" % (comando)
-        p1 = Proceso(comando=str(comando),
-                     profile=self.profile, contador="DSK")
+        # Se crea el proseso y se envia a la cola
+        p1 = Proceso(comando=str(comando),profile=self.profile)
         p1.save()
         self.procesos.add(p1)
-        # To get files with path trin.fileUpload.path
-        # Genero indice y espero hasta que este listo
+        # To get files with path: tales.fileUpload.path
+        # Se genera indice y espero hasta que este listo
         t1 = threading.Thread(target=p1.run_process)
         t1.setDaemon(True)
         t1.start()
         while t1.isAlive():
             sleep(1)
-        file_name = "/tmp/%s_final" % tmp_dir
+        file_name = "/tmp/%s" % tmp_dir
+
+        '''
         with open(file_name, 'r+') as f:
             text = f.read()
             f.seek(0)
             f.truncate()
             f.write(text.replace(' ', '\t'))
+        '''
         out_file = File(fileUpload=Django_File(open(
             file_name)), description="Salida " + self.name, profile=self.profile, ext="results")
         out_file.save()
@@ -261,294 +185,9 @@ class DSK(models.Model):
         p1.resultado = out_file
         p1.save()
 
-    def run(self, file="", k="", minAb="", maxAb=""):
+    def run(self, file_pan="", file_mul=""):
         t = threading.Thread(target=self.run_this, kwargs=dict(
-            file=file, k=k, minAb=minAb, maxAb=maxAb))
-        t.setDaemon(True)
-        t.start()
-
-    class Meta:
-        verbose_name_plural = "Procesos de alinear y estimar abundancia"
-
-    def __unicode__(self):
-        return u"Alineamiento y estimación \n %s" % self.name
-
-
-class Jellyfish(models.Model):
-
-    name = models.TextField(default="Experimento")
-    procesos = models.ManyToManyField(Proceso)
-    contador = models.IntegerField(choices=CONTADORES, default=0)
-    profile = models.ForeignKey(Profile)
-    m = models.IntegerField()
-    minAb = models.BigIntegerField()
-    maxAb = models.BigIntegerField()
-    canonical = models.BooleanField(default=True)
-    out_file = models.ForeignKey(File, null=True)
-
-    def run_this(self, file="", m="", minAb="", maxAb="", canonical=""):
-        self.name = "Experimento %s" % self.id
-        self.save()
-        tmp_dir = "/tmp/Jellyfish%s" % randint(1, 1000000)
-        # Pendiente: Crear el comando y ejecutar pruebas
-        comando_part1 = "jellyfish count -t %s -m %s -s 100000 -L %s -U %s -C -o %s %s" % (
-            settings.CORES, m, minAb, maxAb, tmp_dir, file)
-        comando_part2 = "jellyfish dump -c -o %s_final %s" % (tmp_dir, tmp_dir)
-        comando = "%s && %s" % (comando_part1, comando_part2)
-        # comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl
-        # --thread_count %s  --output_dir %s  --transcripts %s --left %s
-        # --right %s --seqType fq --est_method RSEM --aln_method bowtie
-        # --prep_reference" % (settings.CORES, tmp_dir, reference, "
-        # ".join(reads_1), " ".join(reads_2))
-        print "comando: %s" % (comando)
-        p1 = Proceso(comando=str(comando),
-                     profile=self.profile, contador="Jellyfish")
-        p1.save()
-        self.procesos.add(p1)
-        # To get files with path trin.fileUpload.path
-        # Genero indice y espero hasta que este listo
-        t1 = threading.Thread(target=p1.run_process)
-        t1.setDaemon(True)
-        t1.start()
-        while t1.isAlive():
-            sleep(1)
-        file_name = "%s_final" % tmp_dir
-        with open(file_name, 'r+') as f:
-            text = f.read()
-            f.seek(0)
-            f.truncate()
-            f.write(text.replace(' ', '\t'))
-        out_file = File(fileUpload=Django_File(open(
-            file_name)), description="Salida " + self.name, profile=self.profile, ext="results")
-        out_file.save()
-        self.out_file = out_file
-        p1.resultado = out_file
-        p1.save()
-
-    def run(self, file="", m="", minAb="", maxAb="", canonical=""):
-        t = threading.Thread(target=self.run_this, kwargs=dict(
-            file=file, m=m, minAb=minAb, maxAb=maxAb, canonical=""))
-        t.setDaemon(True)
-        t.start()
-
-    class Meta:
-        verbose_name_plural = "Procesos de alinear y estimar abundancia"
-
-    def __unicode__(self):
-        return u"Alineamiento y estimación \n %s" % self.name
-
-
-class KAnalyze(models.Model):
-
-    name = models.TextField(default="Experimento")
-    procesos = models.ManyToManyField(Proceso)
-    contador = models.IntegerField(choices=CONTADORES, default=0)
-    profile = models.ForeignKey(Profile)
-    k = models.IntegerField()
-    formato = models.IntegerField(choices=FORMATO, default=0)
-    reverse = models.IntegerField(choices=REVERSE, default=0)
-    out_file = models.ForeignKey(File, null=True)
-
-    def run_this(self, file="", k="", formato="", reverse=""):
-        self.name = "Experimento %s" % self.id
-        self.save()
-        tmp_dir = "/tmp/KAnalyze%s" % randint(1, 1000000)
-        # Pendiente: Crear el comando y ejecutar pruebas
-        comando = "java -jar %s/bin/KAnalyze/kanalyze.jar count -d %s -k %s -o %s -f %s -r%s %s" % (settings.BASE_DIR,settings.CORES, k, tmp_dir, FORMATO[
-                                                                int(self.formato)][1], REVERSE[int(self.reverse)][1], file)
-        print "comando: %s" % (comando)
-        p1 = Proceso(comando=str(comando),
-                     profile=self.profile, contador="KAnalyze")
-        p1.save()
-        self.procesos.add(p1)
-        # To get files with path trin.fileUpload.path
-        # Genero indice y espero hasta que este listo
-        t1 = threading.Thread(target=p1.run_process)
-        t1.setDaemon(True)
-        t1.start()
-        while t1.isAlive():
-            sleep(1)
-        file_name = "%s" % tmp_dir
-        with open(file_name, 'r+') as f:
-            text = f.read()
-            f.seek(0)
-            f.truncate()
-            f.write(text.replace(' ', '\t'))
-        out_file = File(fileUpload=Django_File(open(
-            file_name)), description="Salida " + self.name, profile=self.profile, ext="results")
-        out_file.save()
-        self.out_file = out_file
-        p1.resultado = out_file
-        p1.save()
-
-    def run(self, file="", k="", formato="", reverse=""):
-        t = threading.Thread(target=self.run_this, kwargs=dict(
-            file=file, k=k, formato=formato, reverse=reverse))
-        t.setDaemon(True)
-        t.start()
-
-    class Meta:
-        verbose_name_plural = "Procesos de alinear y estimar abundancia"
-
-    def __unicode__(self):
-        return u"Alineamiento y estimación \n %s" % self.name
-
-
-class KMC2(models.Model):
-
-    name = models.TextField(default="Experimento")
-    procesos = models.ManyToManyField(Proceso)
-    contador = models.IntegerField(choices=CONTADORES, default=0)
-    profile = models.ForeignKey(Profile)
-    k = models.IntegerField()
-    minAb = models.BigIntegerField()
-    maxAb = models.BigIntegerField()
-    formato = models.TextField(default="q")
-    out_file = models.ForeignKey(File, null=True)
-
-    def run_this(self, file="", k="", minAb="", maxAb="", formato=""):
-        self.name = "Experimento %s" % self.id
-        self.save()
-        tmp_dir = "/tmp/KMC2%s" % randint(1, 1000000)
-        comando_part1 = "kmc -k%s -ci%s -cx%s -m%s -f%s %s %s /tmp/" % (
-            k, minAb, maxAb, settings.RAM, formato, file, tmp_dir)
-        comando_part2 = "kmc_tools dump %s %s_final" % (tmp_dir, tmp_dir)
-        comando = "%s && %s" % (comando_part1, comando_part2)
-        print "comando: %s" % (comando)
-        p1 = Proceso(comando=str(comando),
-                     profile=self.profile, contador="KMC2")
-        p1.save()
-        self.procesos.add(p1)
-        t1 = threading.Thread(target=p1.run_process)
-        t1.setDaemon(True)
-        t1.start()
-        while t1.isAlive():
-            sleep(1)
-        file_name = "%s_final" % tmp_dir
-        with open(file_name, 'r+') as f:
-            text = f.read()
-            f.seek(0)
-            f.truncate()
-            f.write(text.replace(' ', '\t'))
-        out_file = File(fileUpload=Django_File(open(
-            file_name)), description="Salida " + self.name, profile=self.profile, ext="results")
-        out_file.save()
-        self.out_file = out_file
-        p1.resultado = out_file
-        p1.save()
-
-    def run(self, file="", k="", minAb="", maxAb="", formato=""):
-        t = threading.Thread(target=self.run_this, kwargs=dict(
-            file=file, k=k, minAb=minAb, maxAb=maxAb, formato=formato))
-        t.setDaemon(True)
-        t.start()
-
-    class Meta:
-        verbose_name_plural = "Procesos de alinear y estimar abundancia"
-
-    def __unicode__(self):
-        return u"Alineamiento y estimación \n %s" % self.name
-
-
-class Tallymer(models.Model):
-
-    name=models.TextField(default = "Experimento")
-    procesos=models.ManyToManyField(Proceso)
-    contador=models.IntegerField(choices = CONTADORES, default = 0)
-    profile=models.ForeignKey(Profile)
-    k=models.IntegerField()
-    minAb=models.BigIntegerField()
-    out_file=models.ForeignKey(File, null = True)
-
-    def run_this(self, file = "", k = "", minAb = ""):
-        self.name="Experimento %s" % self.id
-        self.save()
-        tmp_dir="Tallymer%s" % randint(1, 1000000)
-        comando_part1="gt suffixerator -dna -pl -tis -suf -lcp -v -parts 4 -db %s -indexname /tmp/%s" % (
-            file, tmp_dir)
-        comando_part2="gt tallymer mkindex -mersize %s -minocc %s -indexname /tmp/tyr-%s -counts -pl -esa /tmp/%s" % (
-            k, minAb, tmp_dir, tmp_dir)
-        comando_part3="gt tallymer search -tyr /tmp/tyr-%s -output sequence counts -q %s > /tmp/%s_final" % (
-            tmp_dir, file, tmp_dir)
-        comando="%s && %s && %s" % (
-            comando_part1, comando_part2, comando_part3)
-        print "comando: %s" % (comando)
-        p1=Proceso(comando = str(comando),
-                     profile = self.profile, contador = "Tallymer")
-        p1.save()
-        self.procesos.add(p1)
-        t1=threading.Thread(target = p1.run_process)
-        t1.setDaemon(True)
-        t1.start()
-        while t1.isAlive():
-            sleep(1)
-        file_name="/tmp/%s_final" % tmp_dir
-        with open(file_name, 'r+') as f:
-            text=f.read()
-            f.seek(0)
-            f.truncate()
-            f.write(text.replace(' ', '\t'))
-        out_file=File(fileUpload = Django_File(open(
-            file_name)), description = "Salida " + self.name, profile = self.profile, ext = "results")
-        out_file.save()
-        self.out_file=out_file
-        p1.resultado=out_file
-        p1.save()
-
-    def run(self, file = "", k = "", minAb = ""):
-        t=threading.Thread(target = self.run_this,
-                             kwargs = dict(file=file, k=k, minAb=minAb))
-        t.setDaemon(True)
-        t.start()
-
-    class Meta:
-        verbose_name_plural="Procesos de alinear y estimar abundancia"
-
-    def __unicode__(self):
-        return u"Alineamiento y estimación \n %s" % self.name
-
-
-class Turtle(models.Model):
-
-    name=models.TextField(default = "Experimento")
-    procesos=models.ManyToManyField(Proceso)
-    contador=models.IntegerField(choices = CONTADORES, default = 0)
-    profile=models.ForeignKey(Profile)
-    k=models.IntegerField()
-    formato=models.TextField(default = "fastq")
-    out_file=models.ForeignKey(File, null = True)
-
-    def run_this(self, file = "", k = "", formato = ""):
-        self.name="Experimento %s" % self.id
-        self.save()
-        tmp_dir="/tmp/Turtle%s" % randint(1, 1000000)
-        if formato == "fastq":
-            comando="aTurtle64 -k %s -s %s -f %s -q %s" % (
-                k, int(settings.RAM) / 1000, file, tmp_dir)
-        else:
-            comando = "aTurtle64 -k %s -s %s -i %s -q %s" % (
-                k, int(settings.RAM) / 1000, file, tmp_dir)
-        print "comando: %s" % (comando)
-        p1 = Proceso(comando=str(comando),
-                     profile=self.profile, contador="Turtle")
-        p1.save()
-        self.procesos.add(p1)
-        t1 = threading.Thread(target=p1.run_process)
-        t1.setDaemon(True)
-        t1.start()
-        while t1.isAlive():
-            sleep(1)
-        file_name = "%s" % tmp_dir
-        out_file = File(fileUpload=Django_File(open(
-            file_name)), description="Salida " + self.name, profile=self.profile, ext="results")
-        out_file.save()
-        self.out_file = out_file
-        p1.resultado = out_file
-        p1.save()
-
-    def run(self, file="", k="", formato=""):
-        t = threading.Thread(target=self.run_this, kwargs=dict(
-            file=file, k=k, formato=formato))
+            file_pan=file_pan, file_mul=file_mul))
         t.setDaemon(True)
         t.start()
 

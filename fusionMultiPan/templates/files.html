@@ -4,34 +4,68 @@
     <div class="col-sm-10"><h1>Lista de archivos</h1></div>
     <div class="col-sm-2"><br><br><a href="/files/upload/"><span class="label label-success">+ Nuevo archivo</span></a></div>
 </div>
-<br><br>
-<div class="list-group">
-<h3>Archivos subidos</h3>
-    {% for f in file_list %}
-        <div href="#" class="list-group-item glyphicon glyphicon-file">
-            <span class="" title="Description: {{f.description}}">
-                {{f.fileUpload.name|truncatechars:50}}
-            </span>
-            <span class="pull-right">
-                <span class="label label-success glyphicon glyphicon-edit" style="display: table-cell;">
-                    <a style="color:white" href="/files/edit/{{f.id}}">
-                    Editar
-                    </a>
-                </span>
-                <span class="label label-danger glyphicon glyphicon-remove" style="display: table-cell;">
-                    <a style="color:white" href="/files/delete/{{f.id}}">
-                    Borrar 
-                    </a>
-                </span>
-                <span class="label label-success glyphicon glyphicon-download" style="display: table-cell;">
-                    <a style="color:white" href="/files/{{f.id}}/">
-                    Descargar 
-                    </a>
-                </span>
-            </span>
-        </div> 
-    {% endfor %}
+<div class="row">
+    <div class="col-sm-6">
+        <div class="list-group">
+            <h3>Imagenes Multiespectrales</h3>
+            {% for f in mul_file_list %}
+                <div href="#" class="list-group-item glyphicon glyphicon-file">
+                    <span class="" title="Description: {{f.description}}">
+                        {{f.fileUpload.name|truncatechars:50}}
+                    </span>
+                    <span class="pull-right">
+                        <span class="label label-success glyphicon glyphicon-edit" style="display: table-cell;">
+                            <a style="color:white" href="/files/edit/{{f.id}}">
+                            Editar
+                            </a>
+                        </span>
+                        <span class="label label-danger glyphicon glyphicon-remove" style="display: table-cell;">
+                            <a style="color:white" href="/files/delete/{{f.id}}">
+                            Borrar 
+                            </a>
+                        </span>
+                        <span class="label label-success glyphicon glyphicon-download" style="display: table-cell;">
+                            <a style="color:white" href="/files/{{f.id}}/">
+                            Descargar 
+                            </a>
+                        </span>
+                    </span>
+                </div> 
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="list-group">
+            <h3>Imagenes Pancromaticas</h3>
+            {% for f in pan_file_list %}
+                <div href="#" class="list-group-item glyphicon glyphicon-file">
+                    <span class="" title="Description: {{f.description}}">
+                        {{f.fileUpload.name|truncatechars:50}}
+                    </span>
+                    <span class="pull-right">
+                        <span class="label label-success glyphicon glyphicon-edit" style="display: table-cell;">
+                            <a style="color:white" href="/files/edit/{{f.id}}">
+                            Editar
+                            </a>
+                        </span>
+                        <span class="label label-danger glyphicon glyphicon-remove" style="display: table-cell;">
+                            <a style="color:white" href="/files/delete/{{f.id}}">
+                            Borrar 
+                            </a>
+                        </span>
+                        <span class="label label-success glyphicon glyphicon-download" style="display: table-cell;">
+                            <a style="color:white" href="/files/{{f.id}}/">
+                            Descargar 
+                            </a>
+                        </span>
+                    </span>
+                </div> 
+            {% endfor %}
+        </div>
+    </div>
 </div>
+<br><br>
+
 <!--
 <div class="list-group">
 <h3>Resultados de procesos</h3>
