@@ -258,8 +258,6 @@ def download_file(request, id_file):
 def make_fusion(request):
     file_id = request.POST.get('file', '')
     file_path = File.objects.get(id=int(file_id)).fileUpload.path
-    k = request.POST.get('k', '')
-    numKmers = request.POST.get('numKmers', '')
     profile = User.objects.select_related().get(id=request.user.pk).profile
     bf = BFCounter(contador=0, k=k, numKmers=numKmers, profile=profile)
     bf.save()
