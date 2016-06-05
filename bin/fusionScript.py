@@ -3,7 +3,6 @@ import numpy as np
 from PIL import Image
 import sys, getopt
 import exifread
-from scipy import misc
 
 def getH(r, g, b, I):
     Min = r
