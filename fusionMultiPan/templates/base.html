@@ -83,79 +83,14 @@ $('#id_file_mul').on('change', function (e) {
     // si ya existe un API declarado, lo destruyo para poder redimencionar la imagen
     if(jcrop_api_mul) jcrop_api_mul.destroy();
     $('#target_mul').attr('src',/static/+this.value+'.jpg');
-    //$('#preview_mul').attr('src',/static/+this.value+'.jpg');
-    $('#target_mul').attr('style','max-width: 100%');
-    var image = new Image();
-    image.src = $('#target_mul').attr("src");
-    if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
-    //creao un nuevo widget de Jcrop para la nueva imagen
-    $('#target_mul').Jcrop({
-        //onChange: showPreview_mul,
-        trueSize: [image.naturalWidth,image.naturalHeight],
-        bgColor:     'black',
-        bgOpacity:   .2,
-        setSelect:   [ 0, 0, 50, 50 ],
-        aspectRatio: 1,
-        allowResize: false,
-        allowSelect: false
-    },function(){
-        // Use the API to get the real image size
-        //var bounds = this.getBounds();
-        //boundx = bounds[0];
-        //boundy = bounds[1];
-        // Store the API in the jcrop_api variable
-        jcrop_api_mul = this;
-        // Move the preview into the jcrop container for css positioning
-        //$preview.appendTo(jcrop_api_mul.ui.holder);
-        
-    });
-    //configuro el valor del slider que da el tamaño al cuadro de recorte
-    if(image.naturalWidth > image.naturalHeight){
-        max_diadic = Math.log(image.naturalHeight) / Math.log(2)
-        console.log("H:"+image.naturalHeight);
-        console.log("W:"+image.naturalWidth);
-        console.log("max_diadic:"+max_diadic);
-    }else{
-        max_diadic = Math.log(image.naturalWidth) / Math.log(2)
-        console.log("H:"+image.naturalHeight);
-        console.log("W:"+image.naturalWidth);
-        console.log("max_diadic:"+max_diadic);
-    }
-    $('#id_diadica_mul').attr('max', max_diadic|0);
-    $('#id_diadica_mul_val').html( $('#id_diadica_mul').val() );
-    
+    $('#target_mul').attr('style','max-width: 100%');  
 });
 $('#id_file_pan').on('change', function (e) {
     if(jcrop_api_pan) jcrop_api_pan.destroy();
     $('#target_pan').attr('src',/static/+this.value+'.jpg');
-    $('#preview_pan').attr('src',/static/+this.value+'.jpg');
     $('#target_pan').attr('style','max-width: 100%');
-    var image = new Image();
-    image.src = $('#target_pan').attr("src");
-    if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
-    //creao un nuevo widget de Jcrop para la nueva imagen
-    $('#target_pan').Jcrop({
-        //onChange: showPreview_pan,
-        trueSize: [image.naturalWidth,image.naturalHeight],
-        bgColor:     'black',
-        bgOpacity:   .2,
-        setSelect:   [ 0, 0, 50, 50 ],
-        aspectRatio: 1,
-        allowResize: false,
-        allowSelect: false
-    },function(){
-        jcrop_api_pan = this;
-    });
     //configuro el valor del slider que da el tamaño al cuadro de recorte
-    if(image.naturalWidth > image.naturalHeight){
-        max_diadic = Math.log(image.naturalHeight) / Math.log(2)
-        console.log("max_diadic:"+max_diadic);
-    }else{
-        max_diadic = Math.log(image.naturalWidth) / Math.log(2)
-        console.log("max_diadic:"+max_diadic);
-    }
-    $('#id_diadica_pan').attr('max', max_diadic|0);
-    $('#id_diadica_pan_val').html( $('#id_diadica_pan').val() );
+    
 });
 $(document).on('input', '#id_diadica_mul', function() {
     //se actualiza el valor en frontend
@@ -173,20 +108,93 @@ $(document).on('input', '#id_diadica_pan', function() {
     var max_val_diadic = Math.pow(2, diadic_val);
     if(jcrop_api_pan) jcrop_api_pan.setSelect([0, 0, max_val_diadic, max_val_diadic]);
 });
-// function showPreview_mul(c){
-//     if (parseInt(c.w) > 0)
-//       {
-//         var rx = xsize / c.w;
-//         var ry = ysize / c.h;
 
-//         $pimg.css({
-//           width: Math.round(rx * boundx) + 'px',
-//           height: Math.round(ry * boundy) + 'px',
-//           marginLeft: '-' + Math.round(rx * c.x) + 'px',
-//           marginTop: '-' + Math.round(ry * c.y) + 'px'
-//         });
-//       }
-// }
+$('#id_btn_cortar').on('click', function (e) {
+// verifico que los campos esten llenos
+if(!verificarCampos()){
+    alert('debe llenar todos los campos');
+}else{
+    var image = new Image();
+    image.src = $('#target_pan').attr("src");
+    if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
+    //creo un nuevo widget de Jcrop para la nueva imagen
+    $('#target_pan').Jcrop({
+        //onChange: showPreview_pan,
+        trueSize: [image.naturalWidth,image.naturalHeight],
+        bgColor:     'black',
+        bgOpacity:   .2,
+        setSelect:   [ 0, 0, 50, 50 ],
+        aspectRatio: 1,
+        allowResize: false,
+        allowSelect: false
+    },function(){
+        jcrop_api_pan = this;
+    });
+
+    var image = new Image();
+    image.src = $('#target_mul').attr("src");
+    if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
+    if(image.naturalWidth > image.naturalHeight){
+        max_diadic = Math.log(image.naturalHeight) / Math.log(2)
+        console.log("max_diadic:"+max_diadic);
+    }else{
+        max_diadic = Math.log(image.naturalWidth) / Math.log(2)
+        console.log("max_diadic:"+max_diadic);
+    }
+    $('#id_diadica_mul').attr('max', max_diadic|0);
+    $('#id_diadica_mul_val').html( $('#id_diadica_mul').val() );
+    //creo un nuevo widget de Jcrop para la nueva imagen
+    $('#target_mul').Jcrop({
+        onChange: move_jcrops,
+        trueSize: [image.naturalWidth,image.naturalHeight],
+        bgColor:     'black',
+        bgOpacity:   .2,
+        setSelect:   [ 400, 400, 800, 800 ],
+        aspectRatio: 1,
+        allowResize: false,
+        allowSelect: false
+    },function(){
+        // Use the API to get the real image size
+        //var bounds = this.getBounds();
+        //boundx = bounds[0];
+        //boundy = bounds[1];
+        // Store the API in the jcrop_api variable
+        jcrop_api_mul = this;
+        // Move the preview into the jcrop container for css positioning
+        //$preview.appendTo(jcrop_api_mul.ui.holder);
+        
+    });
+}
+});
+function verificarCampos(){
+    if(
+        $('#id_tam_pixel_pan').val().trim() === '' ||
+        $('#id_tam_pixel_mul').val().trim() === '' ||
+        $('#id_lon_pan').val().trim() === '' ||
+        $('#id_lat_pan').val().trim() === '' ||
+        $('#id_lon_mul').val().trim() === '' ||
+        $('#id_lat_mul').val().trim() === ''
+         ){
+        return false
+    }else{return true}
+}
+function move_jcrops(c){
+    if (parseInt(c.w) > 0)
+      {
+        proporcion = $('#id_tam_pixel_mul').val() / $('#id_tam_pixel_pan').val();
+        desfaseX = ($('#id_lon_mul').val() - $('#id_lon_pan').val())*proporcion;
+        desfaseY = ($('#id_lat_mul').val() - $('#id_lat_pan').val())*proporcion;
+
+        x1= c.x - desfaseX
+        y1= c.y - desfaseY
+        x2= c.x2 - desfaseX
+        y2= c.y2 - desfaseY
+        
+        console.log('desfase en x: '+desfaseX);
+        console.log('desfase en y: '+desfaseY);
+        if(jcrop_api_pan) jcrop_api_pan.setSelect([x1*proporcion, y1*proporcion, x2*proporcion, y2*proporcion]);
+      }
+}
 // function showPreview_pan(coords){
 //     var rx = 100 / coords.w;
 //     var ry = 100 / coords.h;

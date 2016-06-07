@@ -20,11 +20,27 @@
                     {% endfor %}
                 </select>* seleccione una imagen multiespectral subida previamente<br><br>
                 <div class="row">
-                <div class="col-sm-4">Tamaño recorte:</div>
-                    <div class="col-sm-7">
-                        <input type="range" id="id_diadica_mul" name="diadica_mul" min="1" max="10" value="7">
+                    <div class="col-sm-4">
+                        <label for="id_tam_pixel_mul" class="col-sm-12 control-label">Tamaño de pixel:</label>
+                        <input type="text" class="form-control" id="id_tam_pixel_mul" placeholder="metros" value="4">‎
                     </div>
-                    <div class="col-sm-1" id="id_diadica_mul_val" style="font-size: 16px;">7</div>
+                    <div class="col-sm-4">
+                        <label for="id_lat_mul" class="col-sm-12 control-label">Latitud</label>
+                        <input type="text" class="form-control" id="id_lat_mul" placeholder="coordenadas planas" value="100">‎
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_lon_mul" class="col-sm-12 control-label">Longitud</label>
+                        <input type="text" class="form-control" id="id_lon_mul" placeholder="coordenadas planas" value="100">‎
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <button type="button" class="btn btn-primary" id="id_btn_cortar">Iniciar corte</button>
+                    </div>
+                    <div class="col-sm-7">
+                        <input type="range" id="id_diadica_mul" name="diadica_mul" min="1" max="10" value="7" style="display:none;">
+                    </div>
+                    <div class="col-sm-1" id="id_diadica_mul_val" style="font-size: 16px;display:none;">7</div>
                 </div>
                 <img src="{% static 'default.png' %}" id="target_mul" style="width: 100%;" />
             </div>
@@ -39,12 +55,19 @@
                     {% endfor %}
                 </select>* seleccione una imagen pancromatica subida previamente<br><br>
                 <div class="row">
-                    <div class="col-sm-4">Tamaño recorte:</div>
-                    <div class="col-sm-7">
-                        <input type="range" id="id_diadica_pan" name="diadica_pan" min="1" max="10" value="7">
+                    <div class="col-sm-4">
+                        <label for="id_tam_pixel_pan" class="col-sm-12 control-label">Tamaño de pixel:</label>
+                        <input type="text" class="form-control" id="id_tam_pixel_pan" placeholder="metros" value="2">‎
                     </div>
-                    <div class="col-sm-1" id="id_diadica_mul_pan" style="font-size: 16px;">7</div>
-                </div>
+                    <div class="col-sm-4">
+                        <label for="id_lat_pan" class="col-sm-12 control-label">Latitud</label>
+                        <input type="text" class="form-control" id="id_lat_pan" placeholder="coordenadas planas" value="200">‎
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_lon_pan" class="col-sm-12 control-label">Longitud</label>
+                        <input type="text" class="form-control" id="id_lon_pan" placeholder="coordenadas planas" value="200">‎
+                    </div>
+                </div><br><br>
                 <img src="{% static 'default.png' %}" id="target_pan" style="width: 100%;" />
             </div>
         </div>

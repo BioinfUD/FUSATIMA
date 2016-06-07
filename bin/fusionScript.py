@@ -68,7 +68,6 @@ def get_componentes(banda, diagonal, nivel):
 		return banda
 		
 
-
 def main():
 	input_mul = sys.argv[1]
 	input_pan = sys.argv[2]
@@ -91,11 +90,19 @@ def main():
 		print '\tla segunda imagen no es pancromatica'
 	# (2) convertir la imagen a HSV
 	print 'Conviertiendo RGB to HSV...'
-	hsv_mul = colors.rgb_to_hsv(image_mul/255)
+	hsv_mul = colors.rgb_to_hsv(image_mul / 255.)
+	plt.imshow(hsv_mul)
+	plt.show()
 	print '\timagen convertida a HSV satisfactoriamente...'
 	H_mul = hsv_mul[:,:,0]
 	S_mul = hsv_mul[:,:,1]
 	V_mul = hsv_mul[:,:,2]
+	plt.imshow(H_mul)
+	plt.show()
+	plt.imshow(S_mul)
+	plt.show()
+	plt.imshow(V_mul)
+	plt.show()
 	# (3) obtener los componentes del value y de la pancro
 	print 'Aplicando la transformada...'
 	diagonal = get_matriz_transformada_inversa(V_mul, False) # False: para hacer la transformada normal
@@ -109,9 +116,16 @@ def main():
 	componentes_V = get_componentes(V_mul, diagonal, nivel)
 	cav, chv, cvv, cdv = divide_componentes(componentes_V)
 	# (4) combino los componentes adecuados de la pan y del value
+	new_cav = np.concatenate((np.concatenate((cav, chp), axis=1), np.concatenate((cvp, cdp), axis=1)), axis=0)
 	# (5) tranformada a los nuevos componentes para obtener new_V
+	diagonal = get_matriz_transformada_inversa(new_cav, True)
+	new_V = np.multiply(new_cav, diagonal)
+	plt.imshow(new_V)
+	plt.show()
 	# (6) combino new_V con H y S
-	# (7) HSC_to_RGB
+	hsv_mul[:,:,2] = new_V
+	# (7) HSV_to_RGB
+	new_RGB = colors.hsv_to_rgb(hsv_mul*255.)
 	# (8) guardo la nueva imagen y tales
 	#print(np.matrix(V_mul))
 	#print(np.matrix(transformada))
