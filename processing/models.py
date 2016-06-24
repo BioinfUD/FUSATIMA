@@ -14,8 +14,8 @@ from django.conf import settings
 from random import randint
 import os
 import csv
-from image_cropping import ImageCropWidget
-from image_cropping import ImageCropField, ImageRatioField
+#from image_cropping import ImageCropWidget
+#from image_cropping import ImageCropField, ImageRatioField
 
 # Opciones estáticas
 POSIBLES_ESTADOS_PROCESOS = (
@@ -51,9 +51,9 @@ class Profile(models.Model):
 
 class File(models.Model):
     fileUpload = models.FileField()
-    pan_image = ImageCropField(blank=True, upload_to='uploaded_images')
+    #pan_image = ImageCropField(blank=True, upload_to='uploaded_images')
     # size is "width x height"
-    cropping = ImageRatioField('pan_image', '430x360')
+    #cropping = ImageRatioField('pan_image', '430x360')
     description = models.TextField(default="")
     profile = models.ForeignKey(Profile)
     ext = models.CharField(max_length=7)
@@ -77,10 +77,10 @@ class File(models.Model):
         return u"Imagen\nDescription: %s " % (self.fileUpload.path, self.description)
 
 
-class ImagesForm(forms.ModelForm):
-    class Meta:
-        model = File
-        fields = ('pan_image',)
+#class ImagesForm(forms.ModelForm):
+#    class Meta:
+#        model = File
+#        fields = ('pan_image',)
 
 
 class Proceso(models.Model):

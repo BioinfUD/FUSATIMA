@@ -9,11 +9,29 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 print '\tLibrerias importadas correctamente'
 
+
+def getTranformada(test_image,diagonal):
+	#multiplico cada fila por la diagonal
+	test_image = test_image.astype(np.float32, copy=False)
+	empty_list = np.zeros_like(test_image)
+	for x in test_image:
+		x[:] = np.dot(x, diagonal)
+	print 'nueva matriz:'
+	print test_image
+	test_image = test_image.transpose()
+	print 'transpuesta:'
+	print test_image
+	for x in test_image:
+		x[:] = np.dot(x, diagonal)
+	test_image = test_image.transpose()
+	print 'nueva matriz despues de segunda transpuesta:'
+	print test_image
+	return test_image
 #Obtiene la matriz con 1/2 y -1/2
 #inv:  Booleno que decide si se hace la transformada inversa (True) o normal (False)
-def get_matriz_transformada_inversa(V_mul, inv):
+def get_matriz_diagonal(V_mul, inv):
 	shape_mul = V_mul.shape
-	diagonal = np.zeros_like(V_mul)
+	diagonal = np.zeros((shape_mul[0],shape_mul[0]))
 	x=0
 	y=0
 	while y < shape_mul[1]-1:
@@ -66,14 +84,34 @@ def get_componentes(banda, diagonal, nivel):
 		return transformada_inv_new_ca
 	else:
 		return banda
-		
+
+
+# Devuelve el tamaño de pixel, el tamaño en X y en Y de na imagen de entrada		
+def getXY(input_mul):   
+	from osgeo import gdal      
+	# print type(filetoread)    
+	ds = gdal.Open(input_mul)    
+	width = ds.RasterXSize    
+	height = ds.RasterYSize    
+	gt = ds.GetGeoTransform()
+	band1 = ds.GetRasterBand(1).ReadAsArray()
+	plt.imshow(band1, cmap='gist_earth')
+	plt.show()
+	minx = gt[0]    
+	miny = gt[3] + width * gt[4] + height * gt[5]    
+	maxx = gt[0] + width * gt[1] + height * gt[2]    
+	maxy = gt[3]
+
+	if not gt is None:
+	    print 'Origin = (', gt[0] , ',', gt[3] ,')'
+	    print 'Pixel Size = (', gt[1] , ',', gt[5] , ')'
 
 def main():
 	input_mul = sys.argv[1]
 	input_pan = sys.argv[2]
 	nivel = int(sys.argv[3])
 	output_fus = sys.argv[4]
-
+	#getXY(input_mul)
 	# (1) Leer las imagenes
 	print 'Leyendo las imagenes...'
 	image_mul = plt.imread(input_mul)
@@ -90,22 +128,24 @@ def main():
 		print '\tla segunda imagen no es pancromatica'
 	# (2) convertir la imagen a HSV
 	print 'Conviertiendo RGB to HSV...'
-	hsv_mul = colors.rgb_to_hsv(image_mul / 255.)
-	plt.imshow(hsv_mul)
-	plt.show()
+	#hsv_mul = colors.rgb_to_hsv(image_mul / 255.)
 	print '\timagen convertida a HSV satisfactoriamente...'
-	H_mul = hsv_mul[:,:,0]
-	S_mul = hsv_mul[:,:,1]
-	V_mul = hsv_mul[:,:,2]
-	plt.imshow(H_mul)
-	plt.show()
-	plt.imshow(S_mul)
-	plt.show()
-	plt.imshow(V_mul)
-	plt.show()
+	#H_mul = hsv_mul[:,:,0]
+	#S_mul = hsv_mul[:,:,1]
+	#V_mul = hsv_mul[:,:,2]
 	# (3) obtener los componentes del value y de la pancro
 	print 'Aplicando la transformada...'
-	diagonal = get_matriz_transformada_inversa(V_mul, False) # False: para hacer la transformada normal
+	test_image = np.matrix([	[165, 151, 130, 0 ],
+								[156, 156, 156, 156],
+								[160, 169, 160, 147],
+								[151, 156, 156, 156]])
+	
+	print 'Test Image:'
+	print test_image
+	diagonal = get_matriz_diagonal(test_image, False) # False: para hacer la transformada normal
+	print 'Diagonal:'
+	print diagonal
+	new_test_image = getTranformada(test_image,diagonal)
 	#print(np.matrix(diagonal))
 	#obtengo los componentes de la pancromatica
 	print '\ttransformada pan:'
@@ -120,8 +160,6 @@ def main():
 	# (5) tranformada a los nuevos componentes para obtener new_V
 	diagonal = get_matriz_transformada_inversa(new_cav, True)
 	new_V = np.multiply(new_cav, diagonal)
-	plt.imshow(new_V)
-	plt.show()
 	# (6) combino new_V con H y S
 	hsv_mul[:,:,2] = new_V
 	# (7) HSV_to_RGB

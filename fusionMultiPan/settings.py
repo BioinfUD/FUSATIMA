@@ -126,7 +126,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'processing',
     'easy_thumbnails',
-    'image_cropping',
+    #'image_cropping',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
