@@ -3,10 +3,14 @@ print '************* ------ Script Init  ------ *************'
 print 'Importando librerias...'
 import numpy as np
 from PIL import Image
+import timeit
 import sys, getopt
 #import exifread
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+
+
 print '\tLibrerias importadas correctamente'
 
 
@@ -14,21 +18,37 @@ def getTranformada(test_image,diagonal):
 	#multiplico cada fila por la diagonal
 	test_image = test_image.astype(np.float32, copy=False)
 	empty_list = np.zeros_like(test_image)
-	for x in test_image:
-		x[:] = np.dot(x, diagonal)
-	print 'nueva matriz:'
-	print test_image
-	test_image = test_image.transpose()
-	print 'transpuesta:'
-	print test_image
+	print '\tmultiplicando la matriz por la diagonal por primera vez'
 	for x in test_image:
 		x[:] = np.dot(x, diagonal)
 	test_image = test_image.transpose()
-	print 'nueva matriz despues de segunda transpuesta:'
-	print test_image
+	print '\tmultiplicando la matriz por la diagonal por segunda vez'
+	for x in test_image:
+		x[:] = np.dot(x, diagonal)
+	test_image = test_image.transpose()
+	print '\tse finalizo la transformada exitosamente'
 	return test_image
+
+
+def getTranformada_Inversa(test_image,diagonal):
+	#multiplico cada fila por la diagonal
+	test_image = test_image.astype(np.float32, copy=False)
+	empty_list = np.zeros_like(test_image)
+	test_image = test_image.transpose()
+	print '\tmultiplicando la matriz por la diagonal por primera vez'
+	for x in test_image:
+		x[:] = np.dot(x, diagonal)
+	test_image = test_image.transpose()
+	print '\tmultiplicando la matriz por la diagonal por segunda vez'
+	for x in test_image:
+		x[:] = np.dot(x, diagonal)
+	
+	print '\tse finalizo la transformada exitosamente'
+	return test_image
+
+
 #Obtiene la matriz con 1/2 y -1/2
-#inv:  Booleno que decide si se hace la transformada inversa (True) o normal (False)
+#inv:  Booleno que decide si se hace la diagonal inversa (con 1 y -1) (True) o normal (False)
 def get_matriz_diagonal(V_mul, inv):
 	shape_mul = V_mul.shape
 	diagonal = np.zeros((shape_mul[0],shape_mul[0]))
@@ -128,120 +148,75 @@ def main():
 		print '\tla segunda imagen no es pancromatica'
 	# (2) convertir la imagen a HSV
 	print 'Conviertiendo RGB to HSV...'
-	#hsv_mul = colors.rgb_to_hsv(image_mul / 255.)
+	hsv_mul = colors.rgb_to_hsv(image_mul / 255.)
 	print '\timagen convertida a HSV satisfactoriamente...'
-	#H_mul = hsv_mul[:,:,0]
-	#S_mul = hsv_mul[:,:,1]
-	#V_mul = hsv_mul[:,:,2]
+	H_mul = hsv_mul[:,:,0]
+	S_mul = hsv_mul[:,:,1]
+	V_mul = hsv_mul[:,:,2]
+	plt.imsave('Test_data/01.hsv_mul.jpg',hsv_mul)
+	plt.imsave('Test_data/02.H.jpg',H_mul, cmap=plt.cm.gray)
+	plt.imsave('Test_data/03.S.jpg',S_mul, cmap=plt.cm.gray)
+	plt.imsave('Test_data/04.V.jpg',V_mul, cmap=plt.cm.gray)
 	# (3) obtener los componentes del value y de la pancro
-	print 'Aplicando la transformada...'
-	test_image = np.matrix([	[165, 151, 130, 0 ],
-								[156, 156, 156, 156],
-								[160, 169, 160, 147],
-								[151, 156, 156, 156]])
 	
-	print 'Test Image:'
-	print test_image
-	diagonal = get_matriz_diagonal(test_image, False) # False: para hacer la transformada normal
-	print 'Diagonal:'
-	print diagonal
-	new_test_image = getTranformada(test_image,diagonal)
-	#print(np.matrix(diagonal))
-	#obtengo los componentes de la pancromatica
-	print '\ttransformada pan:'
-	componentes_pan = get_componentes(image_pan, diagonal, 1) 
-	cap, chp, cvp, cdp = divide_componentes(componentes_pan)
-	print '\ttransformada val:'
-	#obtengo los componentes del Value
-	componentes_V = get_componentes(V_mul, diagonal, nivel)
-	cav, chv, cvv, cdv = divide_componentes(componentes_V)
-	# (4) combino los componentes adecuados de la pan y del value
-	new_cav = np.concatenate((np.concatenate((cav, chp), axis=1), np.concatenate((cvp, cdp), axis=1)), axis=0)
-	# (5) tranformada a los nuevos componentes para obtener new_V
-	diagonal = get_matriz_transformada_inversa(new_cav, True)
-	new_V = np.multiply(new_cav, diagonal)
-	# (6) combino new_V con H y S
-	hsv_mul[:,:,2] = new_V
-	# (7) HSV_to_RGB
-	new_RGB = colors.hsv_to_rgb(hsv_mul*255.)
-	# (8) guardo la nueva imagen y tales
-	#print(np.matrix(V_mul))
-	#print(np.matrix(transformada))
+	#V_mul = np.matrix([	[165, 151, 130, 0 ],
+	#							[156, 156, 156, 156],
+#								[160, 169, 160, 147],
+#								[151, 156, 156, 156]])
+	#plt.imshow(V_mul)
+	#plt.show()
+	#print 'V_mul:'
+	#print V_mul
+	
+	# transformada en el primer nivel al VALUE
+	print 'Aplicando la transformada al VALUE...'
+	diagonal = get_matriz_diagonal(V_mul, False) # False: para hacer la transformada normal
+	transformada_V_mul_image = getTranformada(V_mul,diagonal)
+	plt.imsave('Test_data/05.componentes_V_mul_image.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
+	
+	# transformada en el primer nivel a la PANCROMATIC
+	print 'Aplicando la transformada a la PANCROMATIC...'
+	diagonal = get_matriz_diagonal(image_pan, False) # False: para hacer la transformada normal
+	transformada_pan_image = getTranformada(image_pan/ 255.,diagonal)
+	plt.imsave('Test_data/06.componentes_pan_image.jpg',transformada_pan_image, cmap=plt.cm.gray)
 
-print '************* ------ Script Exit  ------ *************'
+	# obtengo los 4 componentes del VALUE y la PANCROMATIC y los combino
+	print 'Combinando los componentes de VALUE y PANCROMATIC...'
+	cap, chp, cvp, cdp = divide_componentes(transformada_pan_image)
+	#plt.imsave('Test_data/052.chp.jpg',chp, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/053.cvp.jpg',cvp, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/054.cdp.jpg',cdp, cmap=plt.cm.gray)
+	cav, chv, cvv, cdv = divide_componentes(transformada_V_mul_image)
+	plt.imsave('Test_data/061.cav.jpg',cav, cmap=plt.cm.gray)
+	mitad = transformada_pan_image.shape[0]/2
+	
+	transformada_V_mul_image[0:mitad,mitad:] = chp
+	transformada_V_mul_image[mitad:,0:mitad] = cvp
+	transformada_V_mul_image[mitad:,mitad:] = cdp
 
-'''
-for y  in range(0,shape_mul[1]):
-	for x  in range(0,shape_mul[0]):
-		diagonal[x][y] = 0.5
-		if not x == shape_mul[0]-1:
-			diagonal[x+1][y] = -0.5
-			x=x+2
-		break
+	new_V_mul_components = np.concatenate((np.concatenate((cav, chp), axis=1), np.concatenate((cvp, cdp), axis=1)), axis=0)
+	plt.imsave('Test_data/07.componentes_new_V_mul.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
+	print '\tcomponentes combinados exitosamente'
 
+	# Le aplico la transformada inversa a los componentes del nuevo nuevo V_mul
+	print 'Aplicando la transformada inversa a los componentes del nuevo VALUE...'
+	diagonal_inv = get_matriz_diagonal(V_mul, True)
+	new_V_mul = getTranformada_Inversa(new_V_mul_components,diagonal_inv)
+	plt.imsave('Test_data/08.new_V_mul.jpg',new_V_mul, cmap=plt.cm.gray)
+	print '\ttransformada aplicada exitosamente'
 
+	# Obtengo la nueva imagen RGB
+	print 'Obteniendo la nueva imagen RGB...'
+	print '\tuniendo H, S y new_V'
+	old_RGB = colors.hsv_to_rgb(hsv_mul)
+	plt.imsave('Test_data/old_RGB.jpg',old_RGB)
+	hsv_mul[:,:,2] = new_V_mul
+	plt.imsave('Test_data/new_hsv_mul.jpg',hsv_mul)
+	print '\tconviertiendo HSV a RGB'
+	new_RGB = colors.hsv_to_rgb(hsv_mul)
+	print '\tguardando nueva RGB'
+	plt.imsave('Test_data/09.new_RGB.jpg',new_RGB)
+	print '************* ------ Script Exit  ------ *************'
 
-
-def getH(r, g, b, I):
-    Min = r
-    flag = 'r'
-    if g < Min:
-        Min = g
-        flag = 'g'    
-    if b < Min:
-        Min = b
-        flag = 'b'
-        if g < b:
-            Min = g
-            flag = 'g'
-    if flag == 'r':
-        h = (b-r)/(I-765*r) + 255
-    elif flag == 'g':
-		h = (r - g) / (I - 765*g) + 510
-    elif flag == 'b':
-    	h = (g - b) / (I - 765*b)
-    return h
-
-
-def getS(r, g, b, I, H):
-	if 0<=H<=255:
-		s = (I - 765*b) /I
-	elif 255<H<=510:
-		s = (I - 765*r) /I
-	elif 510<H<=765:
-		s = (I - 765*g) /I
-	else:
-		pass
-
-
-def RGB2IHS(r,g,b):
-	# segun la toria de http://ij.ms3d.de/pdf/ihs_transforms.pdf
-	# los valores de RGB deben estar entre 0 y 1
-	r = [x + 1 for x in r]
-	g = [x + 1 for x in g]
-	b = [x + 1 for x in b]
-	I = [x + y + z for x, y, z in zip(r, g, b)]
-	H = [getH(x, y, z, a) for x, y, z, a in zip(r, g, b, I)]
-	S = [getS(x, y, z, a, b) for x, y, z, a, b in zip(r, g, b, I, H)]
-	return I, H, S
-
-
-input_mul = sys.argv[1]
-input_pan = sys.argv[2]
-output_fus = sys.argv[3]
-
-img = Image.open(input_mul)
-print 'la imagen tiene '+str(len(img.getbands()))+' banda(s): '+str(img.getbands())
-if len(img.getbands()) == 4:
-	r, g, b, a = img.split()
-else:
-	r, g, b = img.split()
-#print str(r)
-r_list = list(r.getdata())
-g_list = list(g.getdata())
-b_list = list(b.getdata())
-
-I, H, S = RGB2IHS(r_list,g_list,b_list)
-'''
 
 main()

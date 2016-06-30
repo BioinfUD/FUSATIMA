@@ -114,6 +114,11 @@ $('#id_btn_cortar').on('click', function (e) {
 if(!verificarCampos()){
     alert('debe llenar todos los campos');
 }else{
+    $('#id_diadica_mul').show();
+    $('#id_diadica_mul').attr('value', 1);
+    $('#id_diadica_mul_val').show();
+
+    
     var image = new Image();
     image.src = $('#target_pan').attr("src");
     if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
@@ -123,14 +128,14 @@ if(!verificarCampos()){
         trueSize: [image.naturalWidth,image.naturalHeight],
         bgColor:     'black',
         bgOpacity:   .2,
-        setSelect:   [ 0, 0, 50, 50 ],
+        setSelect:   [ 0, 0, 0, 0 ],
         aspectRatio: 1,
         allowResize: false,
         allowSelect: false
     },function(){
         jcrop_api_pan = this;
     });
-
+    //Establesco los valores del slider que determina el tamaño del recorte
     var image = new Image();
     image.src = $('#target_mul').attr("src");
     if (image.naturalHeight == 0) image.src = $('#target_mul').attr("src");
@@ -141,7 +146,19 @@ if(!verificarCampos()){
         max_diadic = Math.log(image.naturalWidth) / Math.log(2)
         console.log("max_diadic:"+max_diadic);
     }
-    $('#id_diadica_mul').attr('max', max_diadic|0);
+    var image2 = new Image();
+    image2.src = $('#target_pan').attr("src");
+    if(image2.naturalWidth > image2.naturalHeight){
+        max_diadic2 = Math.log(image2.naturalHeight) / Math.log(2)
+        console.log("max_diadic:"+max_diadic);
+    }else{
+        max_diadic2 = Math.log(image2.naturalWidth) / Math.log(2)
+        console.log("max_diadic:"+max_diadic);
+    }
+    if(max_diadic < max_diadic2)
+        $('#id_diadica_mul').attr('max', max_diadic|0);
+    else
+        $('#id_diadica_mul').attr('max', max_diadic2|0);
     $('#id_diadica_mul_val').html( $('#id_diadica_mul').val() );
     //creo un nuevo widget de Jcrop para la nueva imagen
     $('#target_mul').Jcrop({
@@ -149,7 +166,7 @@ if(!verificarCampos()){
         trueSize: [image.naturalWidth,image.naturalHeight],
         bgColor:     'black',
         bgOpacity:   .2,
-        setSelect:   [ 400, 400, 800, 800 ],
+        setSelect:   [ 0, 0, 0, 0 ],
         aspectRatio: 1,
         allowResize: false,
         allowSelect: false
@@ -182,8 +199,8 @@ function move_jcrops(c){
     if (parseInt(c.w) > 0)
       {
         proporcion = $('#id_tam_pixel_mul').val() / $('#id_tam_pixel_pan').val();
-        desfaseX = ($('#id_lon_mul').val() - $('#id_lon_pan').val())*proporcion;
-        desfaseY = ($('#id_lat_mul').val() - $('#id_lat_pan').val())*proporcion;
+        desfaseX = ($('#id_lon_mul').val() - $('#id_lon_pan').val()*(-1))*proporcion;
+        desfaseY = ($('#id_lat_mul').val() - $('#id_lat_pan').val()*(-1))*proporcion;
 
         x1= c.x - desfaseX
         y1= c.y - desfaseY

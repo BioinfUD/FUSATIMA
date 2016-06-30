@@ -256,9 +256,12 @@ def download_file(request, id_file):
 
 @login_required(login_url='/login/')
 def make_fusion(request):
+    #Obtengo las variables
+    ## TODA ESTA FUNCION ESTA PENDIENTE
     file_id = request.POST.get('file', '')
     file_path = File.objects.get(id=int(file_id)).fileUpload.path
     profile = User.objects.select_related().get(id=request.user.pk).profile
+    mcd = 
     bf = BFCounter(contador=0, k=k, numKmers=numKmers, profile=profile)
     bf.save()
     bf.run(file=file_path, k=k, numKmers=numKmers)
@@ -267,3 +270,7 @@ def make_fusion(request):
     msg_continuar = 'Ver lista de procesos'
     return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
 
+########## OTHER SCRIPTS ################
+def MCD(a, b):
+    '''MAXIMO COMUN DIVISOR'''
+    return a if b == 0 else mcd(b, a%b)
