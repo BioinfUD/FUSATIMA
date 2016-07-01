@@ -147,8 +147,6 @@ class Fusion(models.Model):
     name = models.TextField(default="Image Fusion Multispectral and Pancromatic")
     procesos = models.ManyToManyField(Proceso)
     profile = models.ForeignKey(Profile)
-    minAb = models.BigIntegerField()
-    maxAb = models.BigIntegerField()
     out_file = models.ForeignKey(File, null=True)
 
     def run_this(self, file_pan="", file_mul=""):
@@ -156,7 +154,7 @@ class Fusion(models.Model):
         self.save()
         tmp_dir = "fusion_%s" % randint(1, 1000000)
         # Se ejecuta el Scrip creado para fusionar las imagenes
-        comando = "python multiPanFusion -pan %s -mul %s" % (file_pan, file_mul)
+        comando = "python /home/nazkter/Sofware_Develop/fusion_multipan/bin/fusionScript.py %s %s 1 /home/nazkter/Sofware_Develop/fusion_multipan/fusionMultiPan/upload/%s" % (file_mul, file_pan,tmp_dir)
         print "comando: %s" % (comando)
         # Se crea el proseso y se envia a la cola
         p1 = Proceso(comando=str(comando),profile=self.profile)

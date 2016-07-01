@@ -22,15 +22,15 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <label for="id_tam_pixel_mul" class="col-sm-12 control-label">Tamaño de pixel:</label>
-                        <input type="text" class="form-control" id="id_tam_pixel_mul" placeholder="metros" value="1">‎
+                        <input type="text" class="form-control" id="id_tam_pixel_mul" name="tam_pixel_mul" placeholder="metros" value="1">‎
                     </div>
                     <div class="col-sm-4">
                         <label for="id_lat_mul" class="col-sm-12 control-label">Latitud</label>
-                        <input type="text" class="form-control" id="id_lat_mul" placeholder="coordenadas planas" value="0">‎
+                        <input type="text" class="form-control" id="id_lat_mul" name="lat_mul" placeholder="coordenadas planas" value="0">‎
                     </div>
                     <div class="col-sm-4">
                         <label for="id_lon_mul" class="col-sm-12 control-label">Longitud</label>
-                        <input type="text" class="form-control" id="id_lon_mul" placeholder="coordenadas planas" value="0">‎
+                        <input type="text" class="form-control" id="id_lon_mul" name="lon_mul" placeholder="coordenadas planas" value="0">‎
                     </div>
                 </div>
                 <div class="row">
@@ -57,7 +57,7 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <label for="id_tam_pixel_pan" class="col-sm-12 control-label">Tamaño de pixel:</label>
-                        <input type="text" class="form-control" id="id_tam_pixel_pan" placeholder="metros" value="1">‎
+                        <input type="text" class="form-control" id="id_tam_pixel_pan" name="tam_pixel_pan" placeholder="metros" value="1">‎
                     </div>
                     <div class="col-sm-4">
                         <label for="id_lat_pan" class="col-sm-12 control-label">Latitud</label>
@@ -72,7 +72,17 @@
             </div>
         </div>
     </div>
-    
+    Coordenadas mul:
+    <input type="text" id="id_x_mul" name="x_mul" value="0">
+    <input type="text" id="id_y_mul" name="y_mul" value="0">
+    <input type="text" id="id_x2_mul" name="x2_mul" value="0">
+    <input type="text" id="id_y2_mul" name="y2_mul" value="0">
+    <br/>
+    Coordenadas pan:
+    <input type="text" id="id_x_pan" name="x_pan" value="0">
+    <input type="text" id="id_y_pan" name="y_pan" value="0">
+    <input type="text" id="id_x2_pan" name="x2_pan" value="0">
+    <input type="text" id="id_y2_pan" name="y2_pan" value="0">
     <input type="submit" value="Enviar" />
 </form>
     <br><br>

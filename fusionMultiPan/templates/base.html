@@ -206,10 +206,18 @@ function move_jcrops(c){
         y1= c.y - desfaseY
         x2= c.x2 - desfaseX
         y2= c.y2 - desfaseY
-        
+        $('#id_x_mul').val(c.x)
+        $('#id_y_mul').val(c.y)
+        $('#id_x2_mul').val(c.x2)
+        $('#id_y2_mul').val(c.y2)
+        $('#id_x_pan').val(x1*proporcion)
+        $('#id_y_pan').val(y1*proporcion)
+        $('#id_x2_pan').val(x2*proporcion)
+        $('#id_y2_pan').val(y2*proporcion)
         console.log('desfase en x: '+desfaseX);
         console.log('desfase en y: '+desfaseY);
         if(jcrop_api_pan) jcrop_api_pan.setSelect([x1*proporcion, y1*proporcion, x2*proporcion, y2*proporcion]);
+
       }
 }
 // function showPreview_pan(coords){
