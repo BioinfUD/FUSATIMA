@@ -216,6 +216,7 @@ def main():
 	new_RGB = colors.hsv_to_rgb(hsv_mul)
 	print '\tguardando nueva RGB'
 	plt.imsave('Test_data/09.new_RGB.jpg',new_RGB)
+	plt.imsave(output_fus,new_RGB)
 	print '************* ------ Script Exit  ------ *************'
 
 
