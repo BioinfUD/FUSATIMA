@@ -72,7 +72,10 @@ def get_matriz_diagonal(V_mul, inv):
 				x=x+2
 				break
 		y=y+1
-	return diagonal
+	if inv:
+		return diagonal.transpose()
+	else:
+		return diagonal
 
 
 def divide_componentes(transformada):
@@ -187,13 +190,12 @@ def main():
 	#plt.imsave('Test_data/053.cvp.jpg',cvp, cmap=plt.cm.gray)
 	#plt.imsave('Test_data/054.cdp.jpg',cdp, cmap=plt.cm.gray)
 	cav, chv, cvv, cdv = divide_componentes(transformada_V_mul_image)
-	plt.imsave('Test_data/061.cav.jpg',cav, cmap=plt.cm.gray)
 	mitad = transformada_pan_image.shape[0]/2
 	
 	transformada_V_mul_image[0:mitad,mitad:] = chp
 	transformada_V_mul_image[mitad:,0:mitad] = cvp
 	transformada_V_mul_image[mitad:,mitad:] = cdp
-
+	cav = cav*255.
 	new_V_mul_components = np.concatenate((np.concatenate((cav, chp), axis=1), np.concatenate((cvp, cdp), axis=1)), axis=0)
 	plt.imsave('Test_data/07.componentes_new_V_mul.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
 	print '\tcomponentes combinados exitosamente'
@@ -210,7 +212,7 @@ def main():
 	print '\tuniendo H, S y new_V'
 	old_RGB = colors.hsv_to_rgb(hsv_mul)
 	plt.imsave('Test_data/old_RGB.jpg',old_RGB)
-	hsv_mul[:,:,2] = new_V_mul
+	hsv_mul[:,:,2] = new_V_mul/255.
 	plt.imsave('Test_data/new_hsv_mul.jpg',hsv_mul)
 	print '\tconviertiendo HSV a RGB'
 	new_RGB = colors.hsv_to_rgb(hsv_mul)
