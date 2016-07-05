@@ -156,32 +156,22 @@ def main():
 	H_mul = hsv_mul[:,:,0]
 	S_mul = hsv_mul[:,:,1]
 	V_mul = hsv_mul[:,:,2]
-	plt.imsave('Test_data/01.hsv_mul.jpg',hsv_mul)
-	plt.imsave('Test_data/02.H.jpg',H_mul, cmap=plt.cm.gray)
-	plt.imsave('Test_data/03.S.jpg',S_mul, cmap=plt.cm.gray)
-	plt.imsave('Test_data/04.V.jpg',V_mul, cmap=plt.cm.gray)
-	# (3) obtener los componentes del value y de la pancro
-	
-	#V_mul = np.matrix([	[165, 151, 130, 0 ],
-	#							[156, 156, 156, 156],
-#								[160, 169, 160, 147],
-#								[151, 156, 156, 156]])
-	#plt.imshow(V_mul)
-	#plt.show()
-	#print 'V_mul:'
-	#print V_mul
+	#plt.imsave('Test_data/01.hsv_mul.jpg',hsv_mul)
+	#plt.imsave('Test_data/02.H.jpg',H_mul, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/03.S.jpg',S_mul, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/04.V.jpg',V_mul, cmap=plt.cm.gray)
 	
 	# transformada en el primer nivel al VALUE
 	print 'Aplicando la transformada al VALUE...'
 	diagonal = get_matriz_diagonal(V_mul, False) # False: para hacer la transformada normal
 	transformada_V_mul_image = getTranformada(V_mul,diagonal)
-	plt.imsave('Test_data/05.componentes_V_mul_image.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/05.componentes_V_mul_image.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
 	
 	# transformada en el primer nivel a la PANCROMATIC
 	print 'Aplicando la transformada a la PANCROMATIC...'
 	diagonal = get_matriz_diagonal(image_pan, False) # False: para hacer la transformada normal
 	transformada_pan_image = getTranformada(image_pan/ 255.,diagonal)
-	plt.imsave('Test_data/06.componentes_pan_image.jpg',transformada_pan_image, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/06.componentes_pan_image.jpg',transformada_pan_image, cmap=plt.cm.gray)
 
 	# obtengo los 4 componentes del VALUE y la PANCROMATIC y los combino
 	print 'Combinando los componentes de VALUE y PANCROMATIC...'
@@ -197,14 +187,14 @@ def main():
 	transformada_V_mul_image[mitad:,mitad:] = cdp
 	cav = cav*255.
 	new_V_mul_components = np.concatenate((np.concatenate((cav, chp), axis=1), np.concatenate((cvp, cdp), axis=1)), axis=0)
-	plt.imsave('Test_data/07.componentes_new_V_mul.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/07.componentes_new_V_mul.jpg',transformada_V_mul_image, cmap=plt.cm.gray)
 	print '\tcomponentes combinados exitosamente'
 
 	# Le aplico la transformada inversa a los componentes del nuevo nuevo V_mul
 	print 'Aplicando la transformada inversa a los componentes del nuevo VALUE...'
 	diagonal_inv = get_matriz_diagonal(V_mul, True)
 	new_V_mul = getTranformada_Inversa(new_V_mul_components,diagonal_inv)
-	plt.imsave('Test_data/08.new_V_mul.jpg',new_V_mul, cmap=plt.cm.gray)
+	#plt.imsave('Test_data/08.new_V_mul.jpg',new_V_mul, cmap=plt.cm.gray)
 	print '\ttransformada aplicada exitosamente'
 
 	# Obtengo la nueva imagen RGB
@@ -213,7 +203,7 @@ def main():
 	old_RGB = colors.hsv_to_rgb(hsv_mul)
 	plt.imsave('Test_data/old_RGB.jpg',old_RGB)
 	hsv_mul[:,:,2] = new_V_mul/255.
-	plt.imsave('Test_data/new_hsv_mul.jpg',hsv_mul)
+	#plt.imsave('Test_data/new_hsv_mul.jpg',hsv_mul)
 	print '\tconviertiendo HSV a RGB'
 	new_RGB = colors.hsv_to_rgb(hsv_mul)
 	print '\tguardando nueva RGB'
