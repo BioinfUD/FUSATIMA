@@ -67,7 +67,17 @@
                         <label for="id_lon_pan" class="col-sm-12 control-label">Esquina UL X</label>
                         <input type="text" class="form-control" id="id_lon_pan" name="lon_pan" placeholder="coordenadas planas" value="0">‎
                     </div>
-                </div><br><br>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <strong>Nivel:</strong> 
+                        <input type="number" id="id_nivel" name="nivel" min="1" max="2" value="1">
+                    </div>
+                    <div class="col-sm-7">
+                        
+                    </div>
+                    <div class="col-sm-1" id="id_diadica_mul_val" style="font-size: 16px;display:none;">1</div>
+                </div>
                 <img src="{% static 'default.png' %}" id="target_pan" style="width: 100%;" />
             </div>
         </div>

@@ -285,6 +285,7 @@ def make_fusion(request):
     lat_mul = request.POST.get('lat_mul', '')
     lon_mul = request.POST.get('lon_mul', '')
     lon_pan = request.POST.get('lon_pan', '')
+    nivel = request.POST.get('nivel', '')
     tam_pixel_mul = request.POST.get('tam_pixel_mul', '')
     tam_pixel_pan = request.POST.get('tam_pixel_pan', '')
     diadica_mul = request.POST.get('diadica_mul', '')
@@ -319,7 +320,7 @@ def make_fusion(request):
     profile = User.objects.select_related().get(id=request.user.pk).profile    
     f = Fusion(profile=profile)
     f.save()
-    f.run(file_pan=newCell_pan_url, file_mul=newCell_mul_url)
+    f.run(file_pan=newCell_pan_url, file_mul=newCell_mul_url, nivel=nivel)
     success = 'El proceso se ha enviado a ejecución, para ver su estado, consulte la lista de procesos por medio del boton "Procesos" del menú principal o haciendo clic en el siguiente botón:'
     url_continuar = '/process/show'
     msg_continuar = 'Ver lista de procesos'

@@ -19,9 +19,9 @@ A continuacion se listan los procesos que ha corrido en el sistema
     {% for p in process_list %}
     <tr
         {% if "Terminado exitosamente" == p.get_estado %}
-            style="background-color: #1E611E;"
+            style="background-color: #7cde7c;"
         {% elif "Terminado con errores" == p.get_estado %}
-            style="background-color: #6B2223;"
+            style="background-color: #ff8d00;"
         {% endif %}
     >
         <td>{{p.pk}}</td>

@@ -151,13 +151,14 @@ class Fusion(models.Model):
     procesos = models.ManyToManyField(Proceso)
     profile = models.ForeignKey(Profile)
     out_file = models.ForeignKey(File, null=True)
+    nivel = models.IntegerField(default=1)
 
-    def run_this(self, file_pan="", file_mul=""):
+    def run_this(self, file_pan="", file_mul="", nivel=""):
         self.name = "Fusión #%s" % self.id
         self.save()
         tmp_dir = "fusion_%s" % randint(1, 1000000)
         # Se ejecuta el Scrip creado para fusionar las imagenes
-        comando = "python /home/nazkter/Sofware_Develop/fusion_multipan/bin/fusionScript.py %s %s 1 /tmp/%s" % (file_mul, file_pan,tmp_dir)
+        comando = "python /home/nazkter/Sofware_Develop/fusion_multipan/bin/fusionScript.py %s %s %s /tmp/%s" % (file_mul, file_pan, nivel, tmp_dir)
         print "comando: %s" % (comando)
         # Se crea el proseso y se envia a la cola
         p1 = Proceso(comando=str(comando),profile=self.profile)
@@ -186,9 +187,9 @@ class Fusion(models.Model):
         p1.resultado = out_file
         p1.save()
 
-    def run(self, file_pan="", file_mul=""):
+    def run(self, file_pan="", file_mul="", nivel=""):
         t = threading.Thread(target=self.run_this, kwargs=dict(
-            file_pan=file_pan, file_mul=file_mul))
+            file_pan=file_pan, file_mul=file_mul, nivel=nivel))
         t.setDaemon(True)
         t.start()
 
