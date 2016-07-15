@@ -109,7 +109,7 @@ def get_componentes(banda, diagonal, nivel):
 		return banda
 
 
-# Devuelve el tamaño de pixel, el tamaño en X y en Y de na imagen de entrada		
+# Devuelve X, Y, tamaño de celda vertical y tamaño de celda horizontal de la imagen
 def getXY(input_mul):   
 	from osgeo import gdal      
 	# print type(filetoread)    
@@ -120,14 +120,13 @@ def getXY(input_mul):
 	band1 = ds.GetRasterBand(1).ReadAsArray()
 	plt.imshow(band1, cmap='gist_earth')
 	plt.show()
-	minx = gt[0]    
-	miny = gt[3] + width * gt[4] + height * gt[5]    
+	minx = gt[0]
+	miny = gt[3]    
+	maxy = gt[3] + width * gt[4] + height * gt[5]    
 	maxx = gt[0] + width * gt[1] + height * gt[2]    
-	maxy = gt[3]
 
 	if not gt is None:
-	    print 'Origin = (', gt[0] , ',', gt[3] ,')'
-	    print 'Pixel Size = (', gt[1] , ',', gt[5] , ')'
+		return gt[0], gt[3], gt[1],gt[5]
 
 def main():
 	input_mul = sys.argv[1]

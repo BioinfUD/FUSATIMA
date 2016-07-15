@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 import numpy as np
 from forms import *
 from PIL import Image
@@ -15,7 +16,8 @@ from django.core.servers.basehttp import FileWrapper
 from django.contrib.auth.decorators import login_required
 from django.template import loader, Context, RequestContext
 from django.contrib.auth import authenticate, login, logout
-
+import jsonpickle
+sys.path
 
 #   ############ AUTENTICATION ###############
 def auth_view(request):
@@ -108,15 +110,26 @@ def filesubmit(request):
                         'file'], description=desc, profile=p, ext=ext, tipo=1, tipo_multi=tipo_imagen)
         instance.save()
         outfile = instance.fileUpload.path + ".jpg"
+        # Se genera una imagen en formato JPG para poder mostrar en el navegador.
         print outfile
         try:
             im = Image.open(os.path.join(instance.fileUpload.path))
             print "Generating jpeg for %s" % instance.fileUpload.path
             im.thumbnail(im.size)
             im.save(outfile, "JPEG", quality=100)
+            success = 'El archivo se ha guardado satisfactoriamente.'
         except Exception, e:
             print e
-        success = 'El archivo se ha guardado satisfactoriamente.'
+
+        #se obtiene el origen (esquina sup-izq)
+        try:
+            x1, y1, sizex, sizey = getXY(instance.fileUpload.path)
+            instance.x = x1
+            instance.y = y1
+            instance.cell_size = sizex
+            instance.save()
+        except Exception, e:
+            success = 'El archivo se ha guardado satisfactoriamente, pero no se encontró metadatos sobre sus coordenadas.'
         url_continuar = '/files'
         msg_continuar = 'Ver lista de archivos'
         return render(request, 'success.html', {'success': success, 'url_continuar': url_continuar, 'msg_continuar': msg_continuar})
@@ -186,7 +199,15 @@ def home(request):
             profile = User.objects.select_related().get(id=request.user.pk).profile
             pan_image_files = File.objects.all().filter(profile=profile).filter(tipo=1).filter(tipo_multi=False)
             mul_image_files = File.objects.all().filter(profile=profile).filter(tipo=1).filter(tipo_multi=True)
-            return render(request, 'home.html', {'pan_image_files': pan_image_files, 'mul_image_files': mul_image_files})
+            json_pan = '{'
+            json_mul = '{'
+            for pan in pan_image_files:
+                json_pan=json_pan+'\"'+str(pan.fileUpload)+'\":{\"x\":\"'+str(pan.x)+'\",\"y\":\"'+str(pan.y)+'\",\"cell_size\":\"'+str(pan.cell_size)+'\"},';
+            json_pan = json_pan[:-1]+'}'
+            for mul in mul_image_files:
+                json_mul=json_mul+'\"'+str(mul.fileUpload)+'\":{\"x\":\"'+str(mul.x)+'\",\"y\":\"'+str(mul.y)+'\",\"cell_size\":\"'+str(mul.cell_size)+'\"},';
+            json_mul = json_mul[:-1]+'}'
+            return render(request, 'home.html', {'pan_image_files': pan_image_files, 'mul_image_files': mul_image_files, 'json_pan':json_pan,'json_mul':json_mul})
     else:
         return render(request, 'home.html')
 
@@ -356,3 +377,21 @@ def getNewCellSizeImage(image, cell_size, mcd):
     return new_image
 
 
+# Devuelve X, Y, tamaño de celda vertical y tamaño de celda horizontal de la imagen
+def getXY(input_file):   
+    from osgeo import gdal      
+    # print type(filetoread)    
+    ds = gdal.Open(input_file)    
+    width = ds.RasterXSize    
+    height = ds.RasterYSize    
+    gt = ds.GetGeoTransform()
+    band1 = ds.GetRasterBand(1).ReadAsArray()
+    minx = gt[0]
+    miny = gt[3]    
+    maxy = gt[3] + width * gt[4] + height * gt[5]    
+    maxx = gt[0] + width * gt[1] + height * gt[2]    
+
+    if not gt is None:
+        return int(gt[0]), int(gt[3]), int(gt[1]), int(gt[5])
+    else:
+        return None

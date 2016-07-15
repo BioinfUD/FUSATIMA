@@ -54,6 +54,9 @@ class File(models.Model):
     #pan_image = ImageCropField(blank=True, upload_to='uploaded_images')
     # size is "width x height"
     #cropping = ImageRatioField('pan_image', '430x360')
+    x = models.IntegerField(default=0)
+    y = models.IntegerField(default=0)
+    cell_size = models.IntegerField(default=1)
     description = models.TextField(default="")
     profile = models.ForeignKey(Profile)
     ext = models.CharField(max_length=7)

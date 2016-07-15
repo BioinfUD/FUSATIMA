@@ -80,12 +80,18 @@ xsize = $pcnt.width(),
 ysize = $pcnt.height();*/
 
 $('#id_file_mul').on('change', function (e) {
+    $("#id_tam_pixel_mul").val(json_mul[this.value].cell_size);
+    $("#id_lat_mul").val(json_mul[this.value].x);
+    $("#id_lon_mul").val(json_mul[this.value].y);
     // si ya existe un API declarado, lo destruyo para poder redimencionar la imagen
     if(jcrop_api_mul) jcrop_api_mul.destroy();
     $('#target_mul').attr('src',/static/+this.value+'.jpg');
     $('#target_mul').attr('style','max-width: 100%');  
 });
 $('#id_file_pan').on('change', function (e) {
+    $("#id_tam_pixel_pan").val(json_pan[this.value].cell_size);
+    $("#id_lat_pan").val(json_pan[this.value].x);
+    $("#id_lon_pan").val(json_pan[this.value].y);
     if(jcrop_api_pan) jcrop_api_pan.destroy();
     $('#target_pan').attr('src',/static/+this.value+'.jpg');
     $('#target_pan').attr('style','max-width: 100%');
@@ -199,10 +205,11 @@ function move_jcrops(c){
     if (parseInt(c.w) > 0)
       {
         proporcion = $('#id_tam_pixel_mul').val() / $('#id_tam_pixel_pan').val();
-        desfaseX = ($('#id_lon_mul').val() - $('#id_lon_pan').val()*(-1))*proporcion;
-        desfaseY = ($('#id_lat_mul').val() - $('#id_lat_pan').val()*(-1))*proporcion;
+        desfaseX = ($('#id_lon_mul').val() - $('#id_lon_pan').val())*proporcion;
+        desfaseY = ($('#id_lat_mul').val() - $('#id_lat_pan').val())*proporcion;
 
         x1= c.x - desfaseX
+        console.log('x1:'+c.x+' -'+desfaseX)
         y1= c.y - desfaseY
         x2= c.x2 - desfaseX
         y2= c.y2 - desfaseY
