@@ -171,7 +171,7 @@ class Fusion(models.Model):
         t1.start()
         while t1.isAlive():
             sleep(1)
-        file_name = "/tmp/%s.png" % tmp_dir
+        file_name = "/tmp/%s.tif" % tmp_dir
 
         '''
         with open(file_name, 'r+') as f:

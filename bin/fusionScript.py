@@ -189,14 +189,30 @@ def main():
 		diagonal = get_matriz_diagonal(cav, False) # False: para hacer la transformada normal
 		transformada_cav = getTranformada(cav,diagonal)
 		cav2, chv2, cvv2, cdv2 = divide_componentes(transformada_cav)
-		plt.imsave('Test_data/cap2.jpg',chp2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/chp2.jpg',chp2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/cvp2.jpg',cvp2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/cdp2.jpg',cdp2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/cav2.jpg',chv2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/chv2.jpg',chv2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/cvv2.jpg',cvv2, cmap=plt.cm.gray)
-		plt.imsave('Test_data/cdv2.jpg',cdv2, cmap=plt.cm.gray)
+		if nivel > 2:
+			print 'Aplicando la transformada de segundo nivel a la PANCROMATIC...'
+			#transformada del CAP optenidoe en el primer nivel
+			diagonal = get_matriz_diagonal(cap2, False) # False: para hacer la transformada normal
+			transformada_cap2 = getTranformada(cap2,diagonal)
+			cap3, chp3, cvp3, cdp3 = divide_componentes(transformada_cap2)
+			print 'Aplicando la transformada de segundo nivel al VALUE...'
+			#transformada del CAV optenidoe en el primer nivel
+			diagonal = get_matriz_diagonal(cav2, False) # False: para hacer la transformada normal
+			transformada_cav2 = getTranformada(cav2,diagonal)
+			cav3, chv3, cvv3, cdv3 = divide_componentes(transformada_cav2)
+			###__--- AQUI IRIA el Nivel 4 ---__###
+			# combino los nuevos componentes del segundo nivel
+			mitad = transformada_cap2.shape[0]/2
+			transformada_cav2[0:mitad,mitad:] = chp3
+			transformada_cav2[mitad:,0:mitad] = cvp3
+			transformada_cav2[mitad:,mitad:] = cdp3
+			cav3 = cav3*255.
+			new_cav2_components = np.concatenate((np.concatenate((cav3, chp3), axis=1), np.concatenate((cvp3, cdp3), axis=1)), axis=0)
+			#plt.imsave('Test_data/new_cav.jpg',new_cav_components, cmap=plt.cm.gray)
+			#Transformada inversa al tercer nivel
+			diagonal_inv = get_matriz_diagonal(new_cav2_components, True)
+			cav2 = getTranformada_Inversa(new_cav2_components,diagonal_inv)
+			cav2 = cav2/255.
 		# combino los nuevos componentes del segundo nivel
 		mitad = transformada_cap.shape[0]/2
 		transformada_cav[0:mitad,mitad:] = chp2
@@ -204,12 +220,12 @@ def main():
 		transformada_cav[mitad:,mitad:] = cdp2
 		cav2 = cav2*255.
 		new_cav_components = np.concatenate((np.concatenate((cav2, chp2), axis=1), np.concatenate((cvp2, cdp2), axis=1)), axis=0)
-		plt.imsave('Test_data/new_cav.jpg',new_cav_components, cmap=plt.cm.gray)
+		#plt.imsave('Test_data/new_cav.jpg',new_cav_components, cmap=plt.cm.gray)
 		#Transformada inversa al segundo nivel
 		diagonal_inv = get_matriz_diagonal(new_cav_components, True)
 		cav = getTranformada_Inversa(new_cav_components,diagonal_inv)
 		cav = cav/255.
-		plt.imsave('Test_data/new_cav_nivel2.jpg',cav, cmap=plt.cm.gray)
+		#plt.imsave('Test_data/new_cav_nivel2.jpg',cav, cmap=plt.cm.gray)
 	#Combino los componentes resultantes
 	print 'Combinando los componentes de VALUE y PANCROMATIC...'
 	mitad = transformada_pan_image.shape[0]/2
@@ -232,14 +248,16 @@ def main():
 	print 'Obteniendo la nueva imagen RGB...'
 	print '\tuniendo H, S y new_V'
 	old_RGB = colors.hsv_to_rgb(hsv_mul)
-	plt.imsave('Test_data/old_RGB.jpg',old_RGB)
+	#plt.imsave('Test_data/old_RGB.jpg',old_RGB)
 	hsv_mul[:,:,2] = new_V_mul/255.
 	#plt.imsave('Test_data/new_hsv_mul.jpg',hsv_mul)
 	print '\tconviertiendo HSV a RGB'
 	new_RGB = colors.hsv_to_rgb(hsv_mul)
 	print '\tguardando nueva RGB'
-	plt.imsave('Test_data/09.new_RGB.jpg',new_RGB)
-	plt.imsave(output_fus,new_RGB)
+	#plt.imsave('Test_data/09.new_RGB.jpg',new_RGB)
+	plt.imsave(output_fus+'.tif',new_RGB)
+	#plt.imsave(output_fus,new_RGB)
+	plt.imsave('/home/nazkter/Sofware_Develop/fusion_multipan/files/'+output_fus[5:]+'.tif.png',new_RGB)
 	print '************* ------ Script Exit  ------ *************'
 
 

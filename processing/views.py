@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from forms import *
 from PIL import Image
+import matplotlib.image as mpimg
 from processing.models import *
 import matplotlib.pyplot as plt
 from django.shortcuts import render
@@ -113,13 +114,14 @@ def filesubmit(request):
         # Se genera una imagen en formato JPG para poder mostrar en el navegador.
         print outfile
         try:
-            im = Image.open(os.path.join(instance.fileUpload.path))
+            im = Image.open(os.path.join(instance.fileUpload.path),mode="r")
             print "Generating jpeg for %s" % instance.fileUpload.path
             im.thumbnail(im.size)
             im.save(outfile, "JPEG", quality=100)
             success = 'El archivo se ha guardado satisfactoriamente.'
         except Exception, e:
-            print e
+            instance.delete()
+            return render(request, 'error.html', {'error': e})
 
         #se obtiene el origen (esquina sup-izq)
         try:
@@ -128,6 +130,7 @@ def filesubmit(request):
             instance.y = y1
             instance.cell_size = sizex
             instance.save()
+            success = 'El archivo se ha guardado satisfactoriamente.'
         except Exception, e:
             success = 'El archivo se ha guardado satisfactoriamente, pero no se encontró metadatos sobre sus coordenadas.'
         url_continuar = '/files'
