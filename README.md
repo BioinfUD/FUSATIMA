@@ -1,4 +1,4 @@
-# FUSATIMA (Fusion of Satellite Images)
+# FUSATIMA (FUsion of SATellite IMAges)
 <h1>Descripción:</h1>
 Esta implementación permite la creación de una nueva aplicación Web. Esta aplicación ofrece la posibilidad a los usuarios de realizar la fusión de imágenes de satélite de diferentes resoluciones espaciales y / o provenientes de diferentes sensores remotos. La fusión de imágenes de satélite se realiza utilizando la transformada Wavelet.
 
