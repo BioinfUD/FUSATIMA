@@ -6,4 +6,4 @@ Esta implementación permite la creación de una nueva aplicación Web. Esta apl
 El servidor para pruebas se encuentra alojado en la siguiente dirección: <a href="http://bioinfud.com/fusatima/">http://bioinfud.com/fusatima/</a>
 
 <h1>Video-tutorial:</h1>
-<a href="https://youtu.be/CposcdxOf8Y">https://youtu.be/CposcdxOf8Y</a>
+<a href="https://youtu.be/E4S2UEnpXwA">https://youtu.be/E4S2UEnpXwA</a>
